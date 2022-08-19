@@ -1,0 +1,33 @@
+{
+    "name": "light_at_the_end_of_the_tunnel",
+    "version": "1.0.0",
+    "description": "Light at the end of the tunnel the game for js13kGames",
+    "main": "src/main.js",
+    "sideEffects": false,
+    "scripts": {
+        "dist": "gulp dist",
+        "dev": "http-server"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/daivan/Light-at-the-end-of-the-tunnel.git"
+    },
+    "keywords": [
+        "HTML5",
+        "JavaScript",
+        "game",
+        "js13k"
+    ],
+    "author": "Daivan Trinh",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/daivan/Light-at-the-end-of-the-tunnel/issues"
+    },
+    "homepage": "https://github.com/daivan/Light-at-the-end-of-the-tunnel/",
+    "devDependencies": {
+        "gulp": "^4.0.2",
+        "gulp-concat": "^2.6.1",
+        "gulp-minify": "^3.1.0",
+        "http-server": "^14.1.1"
+    }
+}
