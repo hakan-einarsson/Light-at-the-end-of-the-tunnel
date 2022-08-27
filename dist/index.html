@@ -1,8 +1,37 @@
-<html><head><meta charset=utf-8>
-    <meta name=viewport content=width=device-width,height=device-height,initial-scale=1,maximum-scale=1>
-    <meta name=apple-mobile-web-app-capable content=yes>
-    <meta name=mobile-web-app-capable content=yes>
-    <link rel=icon type=image/png href=favicon.png>
-    </head><body>
-    
-    <script src=js/all.js></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    .wrapper {
+        max-width: 256px;
+        height: 256px;
+    }
+    #wrapper canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: -webkit-crisp-edges;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        width: 100%;
+        max-width: 512px;
+    }
+    #background {
+        background-color: black;
+        z-index: -1;
+    }
+    </style>
+<body>
+    <div id="wrapper">
+        <canvas widht=128 height=128 id="game"></canvas>
+        <canvas width=128 height=128 id="background"></canvas>
+    </div>
+    <script src="bundle.js" type="module"></script>
+</body>
+</html>
