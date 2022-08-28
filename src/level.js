@@ -15,4 +15,16 @@ export class Level {
         );
         return corridors;
     }
+
+    draw(canvas) {
+        canvas.width = this.size;
+        canvas.height = this.size;
+        const context = canvas.getContext('2d');
+        this.map.forEach(corridor => {
+            context.rect(corridor.x1, corridor.y1, corridor.width, corridor.height);
+        }
+        );
+        context.fillStyle = 'white';
+        context.fill();
+    }
 }

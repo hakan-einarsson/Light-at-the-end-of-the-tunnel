@@ -9,8 +9,9 @@ import {
     initGamepad,
 } from 'kontra';
 import { levels } from './levels.js';
-import { background } from './background.js';
+import { Canvas } from './Canvas.js';
 import { inputHandler } from './inputHandler.js';
+import { Timer } from './Timer.js';
 
 let { canvas } = init();
 setImagePath('./../assets/images');
@@ -18,8 +19,11 @@ initKeys();
 initGamepad();
 let currentLevel = 0;
 
-const backgroundCanvas = document.getElementById('background');
-background(backgroundCanvas, levels[currentLevel].map);
+const backgroundCanvas = new Canvas(document.getElementById('background'));
+const foregroundCanvas = new Canvas(document.getElementById('foreground'));
+
+
+levels[currentLevel].draw(backgroundCanvas.canvas);
 canvas.width = levels[currentLevel].size;
 canvas.height = levels[currentLevel].size;
 canvas.style.backgroundColor = 'rgba(0, 0, 0, 0)'
@@ -61,40 +65,39 @@ loadImage('wisp.png').then((image) => {
     });
     player.playAnimation('idle');
 
-    //set current time in seconds
-    let lastSecond = new Date().getTime() / 1000;
-    let secondsElapsed = 0;
-    let levelTime = 35;
-    let stageClear = false;
+    const timer = new Timer();
+    let timeElapsed = 0;
+    let levelTime = 10;
+    let opacityChange = 0.60 / (levelTime - 5);
+    let stageLost = false;
     let loop = GameLoop({
         update: function () {
-            let newSeconds = new Date().getTime() / 1000;
-            if (Math.floor(newSeconds - lastSecond) != 0) {
-                lastSecond = newSeconds;
-                secondsElapsed++;
-                if (secondsElapsed <= 30) {
-                    overlay.opacity += overlay.opacityChange;
+            if (timer.tick()) {
+
+                if (timeElapsed <= 30) {
+                    overlay.opacity += opacityChange;
                 }
-                if (secondsElapsed == levelTime) {
-                    stageClear = true;
+                if (timer.timeElapsed == levelTime) {
+                    stageLost = true;
                 }
             }
+
             inputHandler(player, levels[currentLevel].map);
 
             overlay.update();
             player.update();
         },
         render: function () {
-            if (!stageClear) {
+            if (!stageLost) {
                 overlay.render();
                 player.render();
             } else {
-                //show stage clear screen
-                bgContext.fillStyle = 'white';
-                bgContext.fillRect(0, 0, canvas.width, canvas.height);
-                bgContext.font = '5px Arial';
-                bgContext.fillStyle = 'black';
-                bgContext.fillText('Stage Clear', canvas.width / 2 - 100, canvas.height / 2);
+                backgroundCanvas.clear();
+                foregroundCanvas.drawYouLooseText();
+
+
+
+
 
             }
         }

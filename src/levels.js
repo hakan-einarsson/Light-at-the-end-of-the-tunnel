@@ -1,8 +1,8 @@
-import { Level } from "./level";
+import { Level } from "./Level";
 
 export const levels = [
     new Level(
-        'level1',
+        1,
         128,
         [
             [0, 6, 117, 10],
