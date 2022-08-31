@@ -1,9 +1,12 @@
 import { Corridor } from "./gameObjects";
 
 export class Level {
-    constructor(name, size, mapData) {
+    constructor(name, size, mapData, startPoint, endPoint, time) {
         this.name = name;
         this.size = size;
+        this.startPoint = startPoint;
+        this.endPoint = endPoint;
+        this.time = time;
         this.map = this.setUpMap(mapData);
     }
 
@@ -16,15 +19,30 @@ export class Level {
         return corridors;
     }
 
-    draw(canvas) {
+    draw(canvas, image) {
         canvas.width = this.size;
         canvas.height = this.size;
-        const context = canvas.getContext('2d');
+        const context = canvas.context;
         this.map.forEach(corridor => {
-            context.rect(corridor.x1, corridor.y1, corridor.width, corridor.height);
+
+            if (corridor.width >= corridor.height) {
+                for (let i = 0; i < Math.floor(corridor.width / 10); i++) {
+                    context.drawImage(image, corridor.x1 + i * 10, corridor.y1, 10, 10);
+                }
+                if (corridor.width % 10 != 0) {
+                    context.drawImage(image, corridor.x1 + Math.floor(corridor.width / 10) * 10, corridor.y1, corridor.width % 10, 10);
+                }
+            } else {
+                for (let i = 0; i < Math.floor(corridor.height / 10); i++) {
+                    context.drawImage(image, corridor.x1, corridor.y1 + i * 10, 10, 10);
+                }
+                if (corridor.height % 10 != 0) {
+                    context.drawImage(image, corridor.x1, corridor.y1 + Math.floor(corridor.height / 10) * 10, 10, corridor.height % 10);
+                }
+            }
         }
         );
-        context.fillStyle = 'white';
+        context.fillStyle = 'grey';
         context.fill();
     }
 }
