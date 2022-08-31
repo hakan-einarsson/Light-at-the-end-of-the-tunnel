@@ -24,9 +24,13 @@
     }
     #background {
         background-color: black;
+        z-index: -2;
+    }
+    #light-layer {
+        background-color: rgba(0, 0, 0, 0);
         z-index: -1;
     }
-    #foreground {
+    #text-layer {
         width: 512px;
         background-color: rgba(0, 0, 0, 0);
         z-index: 1;
@@ -35,9 +39,10 @@
     </style>
 <body>
     <div id="wrapper">
-        <canvas widht=128 height=128 id="game"></canvas>
-        <canvas width=128 height=128 id="background"></canvas>
-        <canvas width=512 height=512 id="foreground"></canvas>
+        <canvas id="background"></canvas>
+        <canvas id="kontra"></canvas>
+        <canvas id="light-layer"></canvas>
+        <canvas width=512 height=512 id="text-layer"></canvas>
     </div>
     <script src="bundle.js" type="module"></script>
 </body>
