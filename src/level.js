@@ -1,4 +1,4 @@
-import { Corridor } from "./gameObjects";
+import { Corridor } from "./Corridor";
 
 export class Level {
     constructor(name, size, mapData, startPoint, endPoint, time) {
