@@ -28,6 +28,16 @@ function checkIfNextMoveIsInCorridor(player, direction, corridors) {
     return false;
 }
 
+export function checkIfPlayerIsOnEndPoint(player, endPoint) {
+    let endpointRadius = 5;
+    const position = player.getPosition();
+    const playerRadius = player.rad;
+    if (position.x + playerRadius >= endPoint[0] - endpointRadius && position.x - playerRadius <= endPoint[0] + endpointRadius && position.y + playerRadius >= endPoint[1] - endpointRadius && position.y - playerRadius <= endPoint[1] + endpointRadius) {
+        return true;
+    }
+    return false;
+}
+
 
 function move(player, direction) {
     player.x += direction[0];
