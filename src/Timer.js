@@ -2,15 +2,26 @@ export class Timer {
     constructor() {
         this.previousTime = new Date().getTime() / 1000;
         this.timeElapsed = 0;
+        this.isRunning = false;
     }
 
     tick() {
-        let currentTime = new Date().getTime() / 1000;
-        if (Math.floor(currentTime - this.previousTime) != 0) {
-            this.timeElapsed++;
-            this.previousTime = currentTime;
-            return true;
+        if (this.isRunning) {
+            let currentTime = new Date().getTime() / 1000;
+            if (Math.floor(currentTime - this.previousTime) != 0) {
+                this.timeElapsed++;
+                this.previousTime = currentTime;
+                return true;
+            }
         }
         return false;
+    }
+    start() {
+        this.previousTime = new Date().getTime() / 1000;
+        this.isRunning = true;
+    }
+    reset() {
+        this.timeElapsed = 0;
+        this.isRunning = false;
     }
 }
