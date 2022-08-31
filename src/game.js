@@ -3,109 +3,187 @@ import {
     Sprite,
     GameLoop,
     setImagePath,
-    loadImage,
     SpriteSheet,
     initKeys,
     initGamepad,
 } from 'kontra';
 import { levels } from './levels.js';
 import { Canvas } from './Canvas.js';
-import { inputHandler } from './inputHandler.js';
+import { inputHandler, checkIfPlayerIsOnEndPoint } from './inputHandler.js';
 import { Timer } from './Timer.js';
-
-let { canvas } = init();
-setImagePath('./../assets/images');
+import { preloadResources, drawEndPoint } from './GameUtilies.js';
+import { FadingText } from './FadingText.js';
+import { fadingTexts } from './fadingTexts.js';
+let { canvas, context } = init(document.getElementById('kontra'));
+canvas.style.backgroundColor = 'rgba(0, 0, 0, 0)'
+const backgroundCanvas = new Canvas(document.getElementById('background'));
+const textLayerCanvas = new Canvas(document.getElementById('text-layer'));
+const lightLayerCanvas = new Canvas(document.getElementById('light-layer'));
+setImagePath('./../assets/');
 initKeys();
 initGamepad();
-let currentLevel = 0;
-
-const backgroundCanvas = new Canvas(document.getElementById('background'));
-const foregroundCanvas = new Canvas(document.getElementById('foreground'));
 
 
-levels[currentLevel].draw(backgroundCanvas.canvas);
-canvas.width = levels[currentLevel].size;
-canvas.height = levels[currentLevel].size;
-canvas.style.backgroundColor = 'rgba(0, 0, 0, 0)'
-
-
-let overlay = Sprite({
-    x: 0,
-    y: 0,
-    color: 'black',
-    opacity: 0.4,
-    width: canvas.width,
-    height: canvas.height,
-    dx: 0,
-    opacityChange: 0.02,
-});
-
-loadImage('wisp.png').then((image) => {
-    let wispSheet = SpriteSheet({
-        image: image,
+preloadResources().then(images => {
+    let currentLevel = 0;
+    let numberOfLevels = levels.length;
+    let levelTime = 0;
+    const spriteSheet = new SpriteSheet({
+        image: images[0],
         frameWidth: 16,
         frameHeight: 16,
         animations: {
             idle: {
                 frames: '0..3',
-                frameRate: 5
+                frameRate: 5,
+            },
+            death: {
+                frames: '3..7',
+                frameRate: 5,
+
             }
         }
     });
-
-    let player = Sprite({
-        x: 40,
-        y: 5,
-        rad: 4,
-        animations: wispSheet.animations,
-        speed: 1,
-        getPosition: function () {
-            return { x: this.x + 8, y: this.y + 8 };
-        }
-    });
+    const player = getPlayer(spriteSheet);
     player.playAnimation('idle');
-
+    const floorTile = images[1];
+    setLevelProperties(player);
+    drawLevelMap(floorTile);
+    let levelText = new FadingText([512 / 2, 512 / 2], `Level ${currentLevel}`, 50);
     const timer = new Timer();
-    let timeElapsed = 0;
-    let levelTime = 10;
-    let opacityChange = 0.60 / (levelTime - 5);
+    timer.start();
+    const textTimer = new Timer();
+    let deathAnimationTicker = 0;
+    let deathAnimationTickerMax = 60;
+    let deathAnimationTickerActive = false;
+    let darkMode = false;
+    let opacityChange = 1 / (levelTime - 5);
+    let gameCleared = false;
     let stageLost = false;
     let loop = GameLoop({
         update: function () {
-            if (timer.tick()) {
+            if (!gameCleared) {
+                if (timer.tick()) {
+                    if (timer.timeElapsed <= 30) {
+                    }
+                    if (timer.timeElapsed == levelTime - 5) {
+                        darkMode = true;
+                        textTimer.start();
 
-                if (timeElapsed <= 30) {
-                    overlay.opacity += opacityChange;
+                    }
+                    if (timer.timeElapsed == levelTime) {
+                        stageLost = true;
+                        player.playAnimation('death');
+                        deathAnimationTickerActive = true;
+                    }
                 }
-                if (timer.timeElapsed == levelTime) {
-                    stageLost = true;
+                if (!stageLost) {
+                    if (checkIfPlayerIsOnEndPoint(player, levels[currentLevel].endPoint)) {
+                        currentLevel++;
+                        if (currentLevel >= numberOfLevels) {
+                            currentLevel = 0;
+                            gameCleared = true;
+                            timer.reset();
+                        } else {
+                            setLevelProperties(player);
+                            resetForNewLevel();
+                            drawLevelMap(floorTile);
+                        }
+                    }
+                    inputHandler(player, levels[currentLevel].map);
                 }
+                player.update();
             }
-
-            inputHandler(player, levels[currentLevel].map);
-
-            overlay.update();
-            player.update();
         },
         render: function () {
-            if (!stageLost) {
-                overlay.render();
-                player.render();
+            if (!gameCleared) {
+                if (!stageLost) {
+                    drawEndPoint(context, levels[currentLevel].endPoint);
+                    textLayerCanvas.clear();
+                    lightLayerCanvas.clear();
+                    let opacityFactor = opacityChange * (timer.timeElapsed + 1) <= 1 ? opacityChange * (timer.timeElapsed + 1) : 1;
+                    lightLayerCanvas.drawPlayerLight(player.x + player.rad * 2, player.y + player.rad * 2, player.rad, opacityFactor);
+                    player.render();
+                    if (darkMode) {
+                        textTimer.tick();
+                        fadingTexts.forEach((text, index) => {
+                            if (index <= textTimer.timeElapsed && text.opacity > 0) {
+                                textLayerCanvas.drawFadingText(text);
+                                text.reduceOpacity();
+                            }
+                        });
+                    }
+                    if (levelText.opacity) {
+                        textLayerCanvas.drawFadingText(levelText);
+                        levelText.reduceOpacity();
+                    }
+                } else {
+                    if (deathAnimationTickerActive) {
+                        deathAnimationTicker++;
+                        if (deathAnimationTicker < deathAnimationTickerMax) {
+                            player.render();
+                            lightLayerCanvas.clear();
+                            backgroundCanvas.clear();
+                        } else {
+                            backgroundCanvas.clear();
+                            textLayerCanvas.clear();
+                            textLayerCanvas.drawYouLooseText();
+                        }
+                    }
+                }
+
+
             } else {
                 backgroundCanvas.clear();
-                foregroundCanvas.drawYouLooseText();
-
-
-
-
-
+                textLayerCanvas.clear();
+                textLayerCanvas.drawYouWinText();
             }
         }
     });
 
     loop.start();
-});
 
+
+    function getPlayer(spriteSheet) {
+        return Sprite({
+            x: 0,
+            y: 0,
+            rad: 4,
+            animations: spriteSheet.animations,
+            speed: 1,
+            getPosition: function () {
+                return { x: this.x + 8, y: this.y + 8 };
+            },
+            setPosition: function (x, y) {
+                this.x = x - 8;
+                this.y = y - 8;
+            }
+        });
+    }
+    function setLevelProperties(player) {
+        levelTime = levels[currentLevel].time;
+        player.setPosition(levels[currentLevel].startPoint[0], levels[currentLevel].startPoint[1]);
+        backgroundCanvas.setSize(levels[currentLevel].size);
+        lightLayerCanvas.setSize(levels[currentLevel].size);
+        canvas.width = levels[currentLevel].size;
+        canvas.height = levels[currentLevel].size;
+    }
+
+    function drawLevelMap(floorTile) {
+        if (currentLevel <= numberOfLevels) {
+            levels[currentLevel].draw(backgroundCanvas, floorTile);
+        }
+    }
+
+    function resetForNewLevel() {
+        opacityChange = 1 / (levelTime - 5);
+        timer.reset();
+        timer.start();
+        textTimer.reset();
+        darkMode = false;
+        levelText = new FadingText([512 / 2, 512 / 2], 'Level ' + (currentLevel + 1), 50);
+    }
+});
 
 
 
