@@ -31,7 +31,7 @@ preloadResources().then(images => {
     document.onclick = () => {
         startMusic();
     }
-    let currentLevel = 1;
+    let currentLevel = 0;
     let currentLevelVersion = 0;
     let isOnSwitch = false;
     let activeSwitch = null;
@@ -58,7 +58,7 @@ preloadResources().then(images => {
     const floorTile = images[1];
     setLevelProperties(player);
     drawLevelMap(floorTile);
-    let levelText = new FadingText([512 / 2, 512 / 2], `Level ${currentLevel}`, 50);
+    let levelText = new FadingText([512 / 2, 512 / 2], `Level ${levels[currentLevel].name}`, 50);
     const timer = new Timer();
     timer.start();
     const textTimer = new Timer();
@@ -213,11 +213,12 @@ preloadResources().then(images => {
 
     function resetForNewLevel() {
         opacityChange = 1 / (levelTime - 5);
+        currentLevelVersion = 0;
         timer.reset();
         timer.start();
         textTimer.reset();
         darkMode = false;
-        levelText = new FadingText([512 / 2, 512 / 2], 'Level ' + (currentLevel + 1), 50);
+        levelText = new FadingText([512 / 2, 512 / 2], 'Level ' + (levels[currentLevel].name), 50);
     }
 });
 

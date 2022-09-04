@@ -1,13 +1,14 @@
 import { Corridor } from "./Corridor";
 
 export class Level {
-    constructor(name, size, mapData, startPoint, endPoint, time, switches = []) {
+    constructor(name, size, mapData, startPoint, endPoint, time, switches = [], gems = []) {
         this.name = name;
         this.size = size;
         this.startPoint = startPoint;
         this.endPoint = endPoint;
         this.time = time;
         this.switches = switches;
+        this.gems = gems;
         this.map = this.setUpMap(mapData);
     }
 

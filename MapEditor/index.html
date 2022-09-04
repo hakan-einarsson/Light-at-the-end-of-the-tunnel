@@ -19,11 +19,29 @@
         <button id="draw">Draw</button>
         <button id="stop">Stop</button>
         <button id="edit">Edit</button>
-        <button id="print">Print</button>
-        <button id="load">Load</button>
-        <input type="number" id="size" value="128">
+        <label for="size">Size:</label>
+        <input type="number" id="size" value="128" style="width:50px">
+        <button id="version-handler">Versions</button>
+        
         <p id="mouse-down"></p>
         <p id="mouse-up"></p>
+    </div>
+    <div id="versions-panel" style="display:none">
+        <div>
+            <button id="add-version">Add Version</button>
+            <label for="versions">Current version</label>
+            <input type="number" id="versions" min="0" max="0" style="width:30px">
+                
+            
+        </div>
+        <div>
+            <button id="copy-version">Copy version</button>
+            <label for="copy-versions">Version to copy</label>
+            <input type="number" id="copy-versions" min="0" max="0" style="width:30px">
+        </div>
+        <div>
+            <button id="delete-version">Delete current version</button>
+        </div>
     </div>
     <div id="edit-panel" style="display:none">
         <button class="move-horizontal" id="left" data-value="-1">Left</button>
@@ -36,9 +54,21 @@
         <label for="edit-height">Height</label>
         <input type="number" id="edit-height" value="0">
     </div>
+    <div id="draw-panel" style="display: none;">
+        <button class="draw-object" value="0">Corridor</button>
+        <button class="draw-object" value="1">Start Position</button>
+        <button class="draw-object" value="2">End Position</button>
+        <button class="draw-object" value="3">Switch</button>
+        <button class="draw-object" value="4">Gem</button>
+    </div>
     <pre id="corridors"></pre>
     <pre id="edit-corridor"></pre>
-    <textarea id="code"></textarea>
+    <div>
+        <button id="print">Print</button>
+        <button id="load">Load</button>
+
+    </div>
+    <textarea id="code" style="width: 300px;height: 500px;"></textarea>
     <script src="index.js"></script>
 </body>
 </html>
