@@ -9,11 +9,13 @@ import {
 } from 'kontra';
 import { levels } from './levels.js';
 import { Canvas } from './Canvas.js';
-import { inputHandler, checkIfPlayerIsOnEndPoint } from './inputHandler.js';
+import { inputHandler, checkIfPlayerIsOnEndPoint, checkIfPlayerIsOnSwitch } from './inputHandler.js';
 import { Timer } from './Timer.js';
 import { preloadResources, drawEndPoint } from './GameUtilies.js';
 import { FadingText } from './FadingText.js';
 import { fadingTexts } from './fadingTexts.js';
+import { playTestSound } from './Sounds.js';
+import { playMusic } from './Music.js';
 let { canvas, context } = init(document.getElementById('kontra'));
 canvas.style.backgroundColor = 'rgba(0, 0, 0, 0)'
 const backgroundCanvas = new Canvas(document.getElementById('background'));
@@ -25,7 +27,14 @@ initGamepad();
 
 
 preloadResources().then(images => {
-    let currentLevel = 0;
+    let music;
+    document.onclick = () => {
+        startMusic();
+    }
+    let currentLevel = 1;
+    let currentLevelVersion = 0;
+    let isOnSwitch = false;
+    let activeSwitch = null;
     let numberOfLevels = levels.length;
     let levelTime = 0;
     const spriteSheet = new SpriteSheet({
@@ -79,6 +88,7 @@ preloadResources().then(images => {
                 }
                 if (!stageLost) {
                     if (checkIfPlayerIsOnEndPoint(player, levels[currentLevel].endPoint)) {
+                        // playTestSound();
                         currentLevel++;
                         if (currentLevel >= numberOfLevels) {
                             currentLevel = 0;
@@ -90,7 +100,23 @@ preloadResources().then(images => {
                             drawLevelMap(floorTile);
                         }
                     }
-                    inputHandler(player, levels[currentLevel].map);
+                    if (!isOnSwitch) {
+                        levels[currentLevel].switches.forEach((switchObject, index) => {
+                            if (checkIfPlayerIsOnSwitch(player, switchObject)) {
+                                console.log('on switch');
+                                isOnSwitch = true;
+                                activeSwitch = index;
+                                currentLevelVersion < levels[currentLevel].map.length - 1 ? currentLevelVersion++ : currentLevelVersion = 0;
+                                drawLevelMap(floorTile);
+                            }
+                        });
+                    } else {
+                        if (!checkIfPlayerIsOnSwitch(player, levels[currentLevel].switches[activeSwitch])) {
+                            isOnSwitch = false;
+                            activeSwitch = null;
+                        }
+                    }
+                    inputHandler(player, levels[currentLevel].map[currentLevelVersion]);
                 }
                 player.update();
             }
@@ -128,6 +154,7 @@ preloadResources().then(images => {
                             backgroundCanvas.clear();
                             textLayerCanvas.clear();
                             textLayerCanvas.drawYouLooseText();
+                            stopMusic();
                         }
                     }
                 }
@@ -143,7 +170,16 @@ preloadResources().then(images => {
 
     loop.start();
 
-
+    function startMusic(music) {
+        if (!music) {
+            music = new playMusic();
+        }
+    }
+    function stopMusic() {
+        if (!!music) {
+            music.stop();
+        }
+    }
     function getPlayer(spriteSheet) {
         return Sprite({
             x: 0,
@@ -171,7 +207,7 @@ preloadResources().then(images => {
 
     function drawLevelMap(floorTile) {
         if (currentLevel <= numberOfLevels) {
-            levels[currentLevel].draw(backgroundCanvas, floorTile);
+            levels[currentLevel].draw(backgroundCanvas, floorTile, currentLevelVersion);
         }
     }
 

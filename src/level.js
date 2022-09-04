@@ -1,29 +1,36 @@
 import { Corridor } from "./Corridor";
 
 export class Level {
-    constructor(name, size, mapData, startPoint, endPoint, time) {
+    constructor(name, size, mapData, startPoint, endPoint, time, switches = []) {
         this.name = name;
         this.size = size;
         this.startPoint = startPoint;
         this.endPoint = endPoint;
         this.time = time;
+        this.switches = switches;
         this.map = this.setUpMap(mapData);
     }
 
     setUpMap(mapData) {
-        const corridors = [];
-        mapData.forEach(corridor => {
-            corridors.push(new Corridor(corridor[0], corridor[1], corridor[2], corridor[3]));
-        }
-        );
-        return corridors;
+        const versions = [];
+        mapData.forEach(version => {
+            const corridors = [];
+            version.forEach(corridor => {
+                corridors.push(new Corridor(corridor[0], corridor[1], corridor[2], corridor[3]));
+            });
+            versions.push(corridors);
+        });
+        return versions;
     }
 
-    draw(canvas, image) {
+    draw(canvas, image, version) {
+
+        canvas.clear();
         canvas.width = this.size;
         canvas.height = this.size;
         const context = canvas.context;
-        this.map.forEach(corridor => {
+
+        this.map[version].forEach(corridor => {
 
             if (corridor.width >= corridor.height) {
                 for (let i = 0; i < Math.floor(corridor.width / 10); i++) {

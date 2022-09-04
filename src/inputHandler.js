@@ -32,10 +32,26 @@ export function checkIfPlayerIsOnEndPoint(player, endPoint) {
     let endpointRadius = 5;
     const position = player.getPosition();
     const playerRadius = player.rad;
-    if (position.x + playerRadius >= endPoint[0] - endpointRadius && position.x - playerRadius <= endPoint[0] + endpointRadius && position.y + playerRadius >= endPoint[1] - endpointRadius && position.y - playerRadius <= endPoint[1] + endpointRadius) {
+    if (position.x + playerRadius >= endPoint[0] - endpointRadius &&
+        position.x - playerRadius <= endPoint[0] + endpointRadius &&
+        position.y + playerRadius >= endPoint[1] - endpointRadius &&
+        position.y - playerRadius <= endPoint[1] + endpointRadius) {
         return true;
     }
     return false;
+}
+
+export function checkIfPlayerIsOnSwitch(player, switchBounds) {
+    const position = player.getPosition();
+    const switchSize = 10;
+    if (position.x > switchBounds[0] &&
+        position.x < switchBounds[0] + switchSize &&
+        position.y > switchBounds[1] &&
+        position.y < switchBounds[1] + switchSize) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 
