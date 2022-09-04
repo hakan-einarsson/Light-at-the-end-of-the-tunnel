@@ -4,7 +4,8 @@
   "description": "Game for js13k",
   "main": "game.js",
   "dependencies": {
-    "kontra": "^8.0.0"
+    "kontra": "^8.0.0",
+    "zzfx": "^1.1.8"
   },
   "devDependencies": {
     "webpack": "^5.74.0",
