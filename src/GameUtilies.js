@@ -2,7 +2,7 @@ import { loadImage } from 'kontra'
 
 export function preloadResources() {
     const resources = [
-        loadImage('wisp-full.png'),
+        loadImage('full-sheet.png'),
         loadImage('floor-export.png')
     ];
     return Promise.all(resources);
