@@ -53,4 +53,12 @@ export class Level {
         context.fillStyle = 'grey';
         context.fill();
     }
+    delete(type, index) {
+        if (type === 'switches') {
+            this.switches.splice(index, 1);
+        }
+        if (type === 'gems') {
+            this.gems.splice(index, 1);
+        }
+    }
 }

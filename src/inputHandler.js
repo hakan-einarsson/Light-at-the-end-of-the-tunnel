@@ -54,6 +54,18 @@ export function checkIfPlayerIsOnSwitch(player, switchBounds) {
     }
 }
 
+export function checkIfPlayerIsOnGem(player, gem) {
+    const position = player.getPosition();
+    const gemRadius = 6;
+    if (position.x + player.rad >= gem[0] + 3 - gemRadius &&
+        position.x - player.rad <= gem[0] + 3 + gemRadius &&
+        position.y + player.rad >= gem[1] + 3 - gemRadius &&
+        position.y - player.rad <= gem[1] + 3 + gemRadius) {
+        return true;
+    }
+    return false;
+}
+
 
 function move(player, direction) {
     player.x += direction[0];
