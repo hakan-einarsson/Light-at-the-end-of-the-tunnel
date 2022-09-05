@@ -346,27 +346,51 @@ function gameLoop() {
         if (startDrawing && !endDrawing) {
             let startPosX = getStartPos(mouseStartPosition.x, mouseDragPosition.x);
             let endPosX = getEndPos(mouseStartPosition.x, mouseDragPosition.x)
+            let goingLeft = goingLeftOrUp(mouseStartPosition.x, mouseDragPosition.x);
             let startPosY = getStartPos(mouseStartPosition.y, mouseDragPosition.y);
             let endPosY = getEndPos(mouseStartPosition.y, mouseDragPosition.y)
+            let goingUp = goingLeftOrUp(mouseStartPosition.y, mouseDragPosition.y);
             let width = endPosX - startPosX;
             let height = endPosY - startPosY;
-            currentCorridor = new Corridor(startPosX, startPosY, width > height ? width : 10, height > width ? height : 10);
+            let goingVertical = height > width;
+            goingVertical ? width = 10 : goingLeft ? width += 10 : width += 0;
+            goingVertical ? goingUp ? height += 10 : height += 0 : height = 10;
+            currentCorridor = new Corridor(startPosX, startPosY, width, height);
 
 
         }
         if (endDrawing && !startDrawing) {
             startPosX = getStartPos(mouseStartPosition.x, mouseEndPosition.x);
             endPosX = getEndPos(mouseStartPosition.x, mouseEndPosition.x)
+            let goingLeft = goingLeftOrUp(mouseStartPosition.x, mouseEndPosition.x);
             startPosY = getStartPos(mouseStartPosition.y, mouseEndPosition.y);
             endPosY = getEndPos(mouseStartPosition.y, mouseEndPosition.y)
+            let goingUp = goingLeftOrUp(mouseStartPosition.y, mouseEndPosition.y);
+
             width = endPosX - startPosX;
             height = endPosY - startPosY;
-            corridors[version].push(new Corridor(startPosX, startPosY, width > height ? width : 10, height > width ? height : 10));
+            let goingVertical = height > width;
+            if (goingVertical) {
+                width = 10;
+                goingUp ? height += 10 : height += 0;
+                startPosX = mouseStartPosition.x;
+            } else {
+                goingLeft ? width += 10 : width += 0;
+                height = 10;
+                startPosY = mouseStartPosition.y;
+            }
+
+            corridors[version].push(new Corridor(startPosX, startPosY, width, height));
             startDrawing = true;
-            mouseStartPosition.x = mouseEndPosition.x;
-            mouseDragPosition.x = mouseEndPosition.x;
-            mouseStartPosition.y = mouseEndPosition.y;
-            mouseDragPosition.y = mouseEndPosition.y;
+            if (goingVertical) {
+                mouseDragPosition.x = mouseStartPosition.x;
+                mouseStartPosition.y = mouseEndPosition.y;
+                mouseDragPosition.y = mouseEndPosition.y;
+            } else {
+                mouseStartPosition.x = mouseEndPosition.x;
+                mouseDragPosition.x = mouseEndPosition.x;
+                mouseDragPosition.y = mouseStartPosition.y;
+            }
             currentCorridor = new Corridor(mouseStartPosition.x, mouseStartPosition.y, 0, 0);
             endDrawing = false;
         }
@@ -450,8 +474,12 @@ function getStartPos(v1, v2) {
     return v1 < v2 ? v1 : v2;
 }
 
+function goingLeftOrUp(v1, v2) {
+    return v1 > v2;
+}
+
 function getEndPos(v1, v2) {
-    return v1 > v2 ? v1 : v2 + 10;
+    return v1 > v2 ? v1 : v2 + 5;
 }
 
 gameLoop();
