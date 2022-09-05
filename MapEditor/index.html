@@ -22,9 +22,10 @@
         <label for="size">Size:</label>
         <input type="number" id="size" value="128" style="width:50px">
         <button id="version-handler">Versions</button>
-        
-        <p id="mouse-down"></p>
-        <p id="mouse-up"></p>
+    </div>
+    <div>
+        <label for="corridors-only">Show only corridors</label>
+        <input type="checkbox" id="corridors-only">
     </div>
     <div id="versions-panel" style="display:none">
         <div>
@@ -50,9 +51,9 @@
         <button class="move-vertical" id="down" data-value="1">Down</button>
         <button id="delete">Delete</button>
         <label for="edit-width">Width</label>
-        <input type="number" id="edit-width" value="0">
+        <input type="number" id="edit-width" value="0" style="width: 50px;">
         <label for="edit-height">Height</label>
-        <input type="number" id="edit-height" value="0">
+        <input type="number" id="edit-height" value="0" style="width: 50px;">
     </div>
     <div id="draw-panel" style="display: none;">
         <button class="draw-object" value="0">Corridor</button>

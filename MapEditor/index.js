@@ -34,6 +34,7 @@ let startDrawing = false;
 let draging = false;
 let endDrawing = false;
 let drawObject = null;
+let showOnlyCorridors = false;
 
 
 let mouseStartPosition = null;
@@ -61,9 +62,15 @@ const currentVersionSelect = document.getElementById('versions');
 const copyVersionButton = document.getElementById('copy-version');
 const copyVersionsSelect = document.getElementById('copy-versions');
 const deleteVersion = document.getElementById('delete-version');
+const showOnlyCorridorsCheckbox = document.getElementById('corridors-only');
 
 currentVersionSelect.value = version;
 copyVersionsSelect.value = version;
+
+showOnlyCorridorsCheckbox.onchange = function () {
+    console.log(this.checked);
+    showOnlyCorridors = showOnlyCorridorsCheckbox.checked;
+}
 
 versionButton.onclick = function () {
     const versionPanel = document.getElementById('versions-panel');
@@ -412,37 +419,39 @@ function gameLoop() {
     context.closePath();
     context.fillStyle = 'white';
     context.fill();
-    if (startPoint != null) {
-        context.beginPath();
-        context.rect(startPoint.x - 5, startPoint.y - 5, 10, 10);
-        context.closePath();
-        context.fillStyle = 'red';
-        context.fill();
-    }
-    if (endPoint != null) {
-        context.beginPath();
-        context.rect(endPoint.x - 5, endPoint.y - 5, 10, 10);
-        context.closePath();
-        context.fillStyle = 'blue';
-        context.fill();
-    }
-    if (switches.length > 0) {
-        context.beginPath();
-        switches.forEach(switchPos => {
-            context.rect(switchPos[0], switchPos[1], 10, 10);
-        });
-        context.closePath();
-        context.fillStyle = 'green';
-        context.fill();
-    }
-    if (gems.length > 0) {
-        context.beginPath();
-        gems.forEach(gemPos => {
-            context.rect(gemPos[0], gemPos[1], 10, 10);
-        });
-        context.closePath();
-        context.fillStyle = 'orange';
-        context.fill();
+    if (!showOnlyCorridors) {
+        if (startPoint != null) {
+            context.beginPath();
+            context.rect(startPoint.x - 5, startPoint.y - 5, 10, 10);
+            context.closePath();
+            context.fillStyle = 'red';
+            context.fill();
+        }
+        if (endPoint != null) {
+            context.beginPath();
+            context.rect(endPoint.x - 5, endPoint.y - 5, 10, 10);
+            context.closePath();
+            context.fillStyle = 'blue';
+            context.fill();
+        }
+        if (switches.length > 0) {
+            context.beginPath();
+            switches.forEach(switchPos => {
+                context.rect(switchPos[0], switchPos[1], 10, 10);
+            });
+            context.closePath();
+            context.fillStyle = 'green';
+            context.fill();
+        }
+        if (gems.length > 0) {
+            context.beginPath();
+            gems.forEach(gemPos => {
+                context.rect(gemPos[0], gemPos[1], 10, 10);
+            });
+            context.closePath();
+            context.fillStyle = 'orange';
+            context.fill();
+        }
     }
 
 
