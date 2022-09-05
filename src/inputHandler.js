@@ -43,7 +43,7 @@ export function checkIfPlayerIsOnEndPoint(player, endPoint) {
 
 export function checkIfPlayerIsOnSwitch(player, switchBounds) {
     const position = player.getPosition();
-    const switchSize = 10;
+    const switchSize = 11;
     if (position.x > switchBounds[0] &&
         position.x < switchBounds[0] + switchSize &&
         position.y > switchBounds[1] &&
