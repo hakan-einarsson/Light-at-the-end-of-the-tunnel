@@ -168,7 +168,7 @@ printButton.onclick = function () {
     });
     code += '],[';
     gems.forEach(gemObj => {
-        code += `[${gemObj[0]}, ${gemObj[1]}]`;
+        code += `[${gemObj[0]}, ${gemObj[1]}],`;
     });
     code += '])';
     const textarea = document.getElementById('code');
@@ -311,7 +311,7 @@ canvas.onclick = function (e) {
         for (let i = 0; i < corridors[version].length; i++) {
             if (corridors[version][i].x1 <= e.offsetX && corridors[version][i].x2 >= e.offsetX && corridors[version][i].y1 <= e.offsetY && corridors[version][i].y2 >= e.offsetY) {
                 editCorridor = i;
-                editCorridorEl.innerHTML = JSON.stringify(corridors[version][i]);
+                editCorridorEl.innerHTML = 'Corridor: ' + JSON.stringify(corridors[version][i]);
                 editWidth.value = corridors[version][i].width;
                 editHeight.value = corridors[version][i].height;
                 break;
