@@ -209,7 +209,7 @@ preloadResources().then(images => {
 
     function setLevelProperties(player) {
         levelTime = levels[currentLevel].time;
-        opacityChange = 1 / (levelTime - 5);
+        opacityChange = 1 / (levelTime - 3);
         player.setPosition(levels[currentLevel].startPoint[0], levels[currentLevel].startPoint[1]);
         backgroundCanvas.setSize(levels[currentLevel].size);
         lightLayerCanvas.setSize(levels[currentLevel].size);
