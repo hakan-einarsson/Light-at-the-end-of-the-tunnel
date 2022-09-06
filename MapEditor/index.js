@@ -101,7 +101,7 @@ currentVersionSelect.onchange = function () {
 
 copyVersionButton.onclick = function () {
     corridors[copyVersionsSelect.value].forEach(corridor => {
-        corridors[version].push(Object.assign({}, corridor));
+        corridors[version].push(new Corridor(corridor.x1, corridor.y1, corridor.width, corridor.height));
     });
 }
 
