@@ -32,7 +32,7 @@ export class Canvas {
         });
     }
     drawPlayerLight(x, y, r, factor) {
-        let outerRadius = this.canvas.width * (1 - factor) <= r * 3 ? r * 3 : this.canvas.width * (1 - factor);
+        let outerRadius = this.canvas.width * 1.5 * (1 - factor) <= r * 3 ? r * 3 : this.canvas.width * 1.5 * (1 - factor);
         let innerRadius = r + this.canvas.width * 0.1 * (1 - factor);
         let gradient = this.context.createRadialGradient(x, y, innerRadius, x, y, outerRadius);
         gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
