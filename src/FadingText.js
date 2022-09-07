@@ -9,4 +9,8 @@ export class FadingText {
     reduceOpacity() {
         this.opacity -= 0.01;
     }
+
+    reset() {
+        this.opacity = 1;
+    }
 }

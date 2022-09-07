@@ -7,9 +7,10 @@ export class Timer {
 
     tick() {
         if (this.isRunning) {
-            let currentTime = new Date().getTime() / 1000;
+            // let currentTime = new Date().getTime() / 1000;
+            let currentTime = new Date().getTime() / 100
             if (Math.floor(currentTime - this.previousTime) != 0) {
-                this.timeElapsed++;
+                this.timeElapsed += 0.1;
                 this.previousTime = currentTime;
                 return true;
             }
