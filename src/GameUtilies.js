@@ -3,7 +3,8 @@ import { loadImage } from 'kontra'
 export function preloadResources() {
     const resources = [
         loadImage('full-sheet.png'),
-        loadImage('floor-export.png')
+        loadImage('floor-export.png'),
+        loadImage('splash.png')
     ];
     return Promise.all(resources);
 }

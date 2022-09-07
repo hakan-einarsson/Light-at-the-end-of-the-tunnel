@@ -2,19 +2,26 @@ import { keyPressed, gamepadPressed, keyMap } from 'kontra';
 
 export function inputHandler(player, corridors) {
     const direction = [0, 0];
-    if (keyPressed(keyMap.ArrowDown) || gamepadPressed('dpaddown')) {
+    if (keyPressed(keyMap.ArrowDown) || keyPressed('s') || gamepadPressed('dpaddown')) {
         direction[1] += 1;
     }
-    if (keyPressed(keyMap.ArrowUp) || gamepadPressed('dpadup')) {
+    if (keyPressed(keyMap.ArrowUp) || keyPressed('w') || gamepadPressed('dpadup')) {
         direction[1] -= 1;
     }
-    if (keyPressed(keyMap.ArrowLeft) || gamepadPressed('dpadleft')) {
+    if (keyPressed(keyMap.ArrowLeft) || keyPressed('a') || gamepadPressed('dpadleft')) {
         direction[0] -= 1;
     }
-    if (keyPressed(keyMap.ArrowRight) || gamepadPressed('dpadright')) {
+    if (keyPressed(keyMap.ArrowRight) || keyPressed('d') || gamepadPressed('dpadright')) {
         direction[0] += 1;
     }
     checkIfNextMoveIsInCorridor(player, direction, corridors) && move(player, direction);
+}
+
+export function checkStartGame(button) {
+    if (keyPressed(keyMap.Space) || gamepadPressed('south') || gamepadPressed('start')) {
+        return true;
+    }
+    return false;
 }
 
 function checkIfNextMoveIsInCorridor(player, direction, corridors) {

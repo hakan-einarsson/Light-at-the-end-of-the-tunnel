@@ -7,7 +7,7 @@ import {
 } from 'kontra';
 import { levels } from './levels.js';
 import { Canvas } from './Canvas.js';
-import { inputHandler, checkIfPlayerIsOnEndPoint, checkIfPlayerIsOnSwitch, checkIfPlayerIsOnGem } from './inputHandler.js';
+import { inputHandler, checkIfPlayerIsOnEndPoint, checkIfPlayerIsOnSwitch, checkIfPlayerIsOnGem, checkStartGame } from './inputHandler.js';
 import { Timer } from './Timer.js';
 import { preloadResources, drawEndPoint } from './GameUtilies.js';
 import { FadingText } from './FadingText.js';
@@ -20,11 +20,13 @@ canvas.style.backgroundColor = 'rgba(0, 0, 0, 0)'
 const backgroundCanvas = new Canvas(document.getElementById('background'));
 const textLayerCanvas = new Canvas(document.getElementById('text-layer'));
 const lightLayerCanvas = new Canvas(document.getElementById('light-layer'));
-setImagePath('./../assets/');
+setImagePath('./assets/');
 initKeys();
 initGamepad();
 preloadResources().then(images => {
     let music;
+    let gameStarted = false;
+    let startButton = null;
     // document.onclick = () => {
     //     startMusic();
     // }
@@ -37,6 +39,7 @@ preloadResources().then(images => {
     let spriteFactory = new SpriteFactory(images[0]);
     const player = spriteFactory.getPlayer();
     const floorTile = images[1];
+    const splash = images[2];
     let levelText = new FadingText([512 / 2, 512 / 2], `Level ${levels[currentLevel].name}`, 50);
     const timer = new Timer();
     const textTimer = new Timer();
@@ -49,80 +52,93 @@ preloadResources().then(images => {
     let stageLost = false;
 
 
-    setLevelProperties(player);
-    drawLevelMap(floorTile);
-    startMusic();
+
 
     let loop = GameLoop({
         update: function () {
-            if (!gameCleared) {
-                if (timer.tick()) {
-                    if (timer.timeElapsed == levelTime - 5) {
-                        darkMode = true;
-                        textTimer.start();
+            if (gameStarted) {
+                if (!gameCleared) {
+                    if (timer.tick()) {
+                        // print out timer.timeElapsed rounded up to one decimal place
+                        let timeRounded = Math.round(timer.timeElapsed * 10) / 10;
+                        if (timeRounded == levelTime - 5) {
+                            darkMode = true;
+                            textTimer.start();
+                        }
+                        if (timeRounded == levelTime) {
+                            stageLost = true;
+                            player.playAnimation('death');
+                            deathAnimationTickerActive = true;
+                        }
                     }
-                    if (timer.timeElapsed == levelTime) {
-                        stageLost = true;
-                        player.playAnimation('death');
-                        deathAnimationTickerActive = true;
+                    if (!stageLost) {
+                        checkEndPoint();
+                        checkSwitches();
+                        checkGems();
+                        checkExplodingGems();
+                        inputHandler(player, levels[currentLevel].map[currentLevelVersion]);
                     }
+                    player.update();
                 }
-                if (!stageLost) {
-                    checkEndPoint();
-                    checkSwitches();
-                    checkGems();
-                    checkExplodingGems();
-                    inputHandler(player, levels[currentLevel].map[currentLevelVersion]);
+            } else {
+                if (checkStartGame(startButton)) {
+                    startMusic();
+                    gameStarted = true;
+                    setLevelProperties(player);
+                    drawLevelMap(floorTile);
                 }
-                player.update();
             }
         },
         render: function () {
-            if (!gameCleared) {
-                if (!stageLost) {
-                    drawEndPoint(context, levels[currentLevel].endPoint);
-                    textLayerCanvas.clear();
-                    lightLayerCanvas.clear();
-                    drawPlayerLight();
-                    renderGems();
-                    renderExplodingGems();
+            if (gameStarted) {
+                if (!gameCleared) {
+                    if (!stageLost) {
+                        drawEndPoint(context, levels[currentLevel].endPoint);
+                        textLayerCanvas.clear();
+                        lightLayerCanvas.clear();
+                        drawPlayerLight();
+                        renderGems();
+                        renderExplodingGems();
 
 
-                    player.render();
-                    if (darkMode) {
-                        textTimer.tick();
-                        fadingTexts.forEach((text, index) => {
-                            if (index <= textTimer.timeElapsed && text.opacity > 0) {
-                                textLayerCanvas.drawFadingText(text);
-                                text.reduceOpacity();
+                        player.render();
+                        if (darkMode) {
+                            textTimer.tick();
+                            fadingTexts.forEach((text, index) => {
+                                if (index <= textTimer.timeElapsed && text.opacity > 0) {
+                                    textLayerCanvas.drawFadingText(text);
+                                    text.reduceOpacity();
+                                }
+                            });
+                        }
+                        if (levelText.opacity) {
+                            textLayerCanvas.drawFadingText(levelText);
+                            levelText.reduceOpacity();
+                        }
+                    } else {
+                        if (deathAnimationTickerActive) {
+                            deathAnimationTicker++;
+                            if (deathAnimationTicker < deathAnimationTickerMax) {
+                                player.render();
+                                lightLayerCanvas.clear();
+                                backgroundCanvas.clear();
+                            } else {
+                                backgroundCanvas.clear();
+                                textLayerCanvas.clear();
+                                textLayerCanvas.drawYouLooseText();
+                                stopMusic();
                             }
-                        });
-                    }
-                    if (levelText.opacity) {
-                        textLayerCanvas.drawFadingText(levelText);
-                        levelText.reduceOpacity();
-                    }
-                } else {
-                    if (deathAnimationTickerActive) {
-                        deathAnimationTicker++;
-                        if (deathAnimationTicker < deathAnimationTickerMax) {
-                            player.render();
-                            lightLayerCanvas.clear();
-                            backgroundCanvas.clear();
-                        } else {
-                            backgroundCanvas.clear();
-                            textLayerCanvas.clear();
-                            textLayerCanvas.drawYouLooseText();
-                            stopMusic();
                         }
                     }
+
+
+                } else {
+                    backgroundCanvas.clear();
+                    textLayerCanvas.clear();
+                    textLayerCanvas.drawYouWinText();
                 }
-
-
             } else {
-                backgroundCanvas.clear();
-                textLayerCanvas.clear();
-                textLayerCanvas.drawYouWinText();
+                showStartScreen();
             }
         }
     });
@@ -131,8 +147,17 @@ preloadResources().then(images => {
 
 
     //game loop functions
+    function showStartScreen() {
+        backgroundCanvas.setSize(128);
+        backgroundCanvas.clear();
+        backgroundCanvas.context.rect(0, 0, 128, 128);
+        backgroundCanvas.context.fillStyle = '#000';
+        backgroundCanvas.context.fill();
+        backgroundCanvas.context.drawImage(splash, 14, 16);
+        startButton = textLayerCanvas.drawButton(256, 350, 'Start')
 
-    function startMusic(music) {
+    }
+    function startMusic() {
         if (!music) {
             music = new playMusic();
         }
@@ -147,6 +172,7 @@ preloadResources().then(images => {
             currentLevel++;
             if (currentLevel >= numberOfLevels) {
                 currentLevel = 0;
+                currentLevelVersion = 0;
                 gameCleared = true;
                 timer.reset();
             } else {
@@ -173,6 +199,8 @@ preloadResources().then(images => {
                 timer.reset();
                 timer.start();
                 darkMode = false;
+                textTimer.reset();
+                resetFadingTexts();
                 pickupSound();
             }
         });
@@ -207,6 +235,12 @@ preloadResources().then(images => {
         }
     }
 
+    function resetFadingTexts() {
+        fadingTexts.forEach(text => {
+            text.reset();
+        });
+    }
+
     function setLevelProperties(player) {
         levelTime = levels[currentLevel].time;
         opacityChange = 1 / (levelTime - 3);
@@ -223,6 +257,7 @@ preloadResources().then(images => {
         timer.start();
         textTimer.reset();
         darkMode = false;
+        resetFadingTexts();
         levelText = new FadingText([512 / 2, 512 / 2], 'Level ' + (levels[currentLevel].name), 50);
     }
 
