@@ -15,6 +15,8 @@ let levelNumber = 1;
 let currentCorridor = null;
 let time = 0;
 let editCorridor = -1;
+let editSwitch = false;
+let editGem = false;
 class Corridor {
     constructor(x, y, width, height) {
         this.x1 = x;
@@ -63,9 +65,21 @@ const copyVersionButton = document.getElementById('copy-version');
 const copyVersionsSelect = document.getElementById('copy-versions');
 const deleteVersion = document.getElementById('delete-version');
 const showOnlyCorridorsCheckbox = document.getElementById('corridors-only');
+const levelTimeInput = document.getElementById('level-time');
+const levelNumberInput = document.getElementById('level-number');
 
 currentVersionSelect.value = version;
 copyVersionsSelect.value = version;
+time = levelTimeInput.value;
+levelNumber = levelNumberInput.value;
+
+levelTimeInput.onchange = function () {
+    time = parseInt(levelTimeInput.value);
+};
+
+levelNumberInput.onchange = function () {
+    levelNumber = parseInt(levelNumberInput.value);
+};
 
 showOnlyCorridorsCheckbox.onchange = function () {
     console.log(this.checked);
@@ -133,17 +147,35 @@ sizeInput.onchange = function () {
 loadButton.onclick = function () {
     //load from textarea
     const textarea = document.getElementById('code');
-    const text = textarea.value;
-    //from json
-    const json = JSON.parse(text);
-    console.log(json)
-    // const lines = text.split('\n');
-    // corridors.length = 0;
-    // for (let i = 0; i < lines.length; i++) {
-    //     const line = lines[i];
-    //     const values = line.split(',');
-    //     corridors.push(new Corridor(values[0], values[1], values[2], values[3]));
-    // }
+    let text = textarea.value;
+    const type = text.split('\n')[0];
+    //remove first line
+    text = text.split('\n').slice(1).join('\n');
+
+    //remove brackets
+    const textWithoutBrackets = text.replace(/[\[\]]/g, '');
+    //split by commas
+    const corridorsArray = textWithoutBrackets.split(',');
+    if (type == "Corridors") {
+        console.log()
+        for (let i = 0; i < corridorsArray.length; i += 4) {
+            const corridor = new Corridor(parseInt(corridorsArray[i]), parseInt(corridorsArray[i + 1]), parseInt(corridorsArray[i + 2]), parseInt(corridorsArray[i + 3]));
+            corridors[version].push(corridor);
+        }
+        textarea.value = "";
+    }
+    if (type == "Switches") {
+        for (let i = 0; i < corridorsArray.length; i += 2) {
+            switches.push([parseInt(corridorsArray[i]), parseInt(corridorsArray[i + 1])]);
+        }
+        textarea.value = "";
+    }    // console.log(text);
+    if (type == "Gems") {
+        for (let i = 0; i < corridorsArray.length; i += 2) {
+            gems.push([parseInt(corridorsArray[i]), parseInt(corridorsArray[i + 1])]);
+        }
+        textarea.value = "";
+    }
 }
 
 
@@ -180,6 +212,14 @@ deleteButton.onclick = function () {
         corridors[version].splice(editCorridor, 1);
         editCorridor = -1;
     }
+    if (editSwitch > -1) {
+        switches.splice(editSwitch, 1);
+        editSwitch = -1;
+    }
+    if (editGem > -1) {
+        gems.splice(editGem, 1);
+        editGem = -1;
+    }
 }
 
 editWidth.onclick = function () {
@@ -200,6 +240,12 @@ for (const el of Object.values(moveHorizontal)) {
             corridors[version][editCorridor].x1 += parseInt(e.target.getAttribute('data-value'));
             corridors[version][editCorridor].x2 += parseInt(e.target.getAttribute('data-value'));
         }
+        if (editSwitch > -1) {
+            switches[editSwitch][0] += parseInt(e.target.getAttribute('data-value'));
+        }
+        if (editGem > -1) {
+            gems[editGem][0] += parseInt(e.target.getAttribute('data-value'));
+        }
     });
 };
 
@@ -209,6 +255,13 @@ for (const el of Object.values(moveVertical)) {
             corridors[version][editCorridor].y1 += parseInt(e.target.getAttribute('data-value'));
             corridors[version][editCorridor].y2 += parseInt(e.target.getAttribute('data-value'));
         }
+        if (editSwitch > -1) {
+            switches[editSwitch][1] += parseInt(e.target.getAttribute('data-value'));
+        }
+        if (editGem > -1) {
+            gems[editGem][1] += parseInt(e.target.getAttribute('data-value'));
+        }
+
     });
 };
 
@@ -311,10 +364,34 @@ canvas.onclick = function (e) {
         for (let i = 0; i < corridors[version].length; i++) {
             if (corridors[version][i].x1 <= e.offsetX && corridors[version][i].x2 >= e.offsetX && corridors[version][i].y1 <= e.offsetY && corridors[version][i].y2 >= e.offsetY) {
                 editCorridor = i;
+                editGem = -1;
+                editSwitch = -1;
                 editCorridorEl.innerHTML = 'Corridor: ' + JSON.stringify(corridors[version][i]);
                 editWidth.value = corridors[version][i].width;
                 editHeight.value = corridors[version][i].height;
                 break;
+            }
+        }
+        if (!showOnlyCorridors) {
+            for (let i = 0; i < switches.length; i++) {
+                let size = 10;
+                if (switches[i][0] <= e.offsetX && switches[i][0] + size >= e.offsetX && switches[i][1] <= e.offsetY && switches[i][1] + size >= e.offsetY) {
+                    editSwitch = i;
+                    editGem = -1;
+                    editCorridor = -1;
+                    editCorridorEl.innerHTML = 'Switch: ' + JSON.stringify(switches[i]);
+                    break;
+                }
+            }
+            for (let i = 0; i < gems.length; i++) {
+                let size = 10;
+                if (gems[i][0] <= e.offsetX && gems[i][0] + size >= e.offsetX && gems[i][1] <= e.offsetY && gems[i][1] + size >= e.offsetY) {
+                    editGem = i;
+                    editSwitch = -1;
+                    editCorridor = -1;
+                    editCorridorEl.innerHTML = 'Gem: ' + JSON.stringify(gems[i]);
+                    break;
+                }
             }
         }
     } else {
