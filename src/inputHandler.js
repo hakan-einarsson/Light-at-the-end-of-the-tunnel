@@ -14,7 +14,9 @@ export function inputHandler(player, corridors) {
     if (keyPressed(keyMap.ArrowRight) || keyPressed('d') || gamepadPressed('dpadright')) {
         direction[0] += 1;
     }
-    checkIfNextMoveIsInCorridor(player, direction, corridors) && move(player, direction);
+    const checkNextMove = checkIfNextMoveIsInCorridor(player, direction, corridors)
+    checkNextMove[0] && move(player, direction);
+    return checkNextMove[1];
 }
 
 export function checkStartGame(button) {
@@ -26,13 +28,25 @@ export function checkStartGame(button) {
 
 function checkIfNextMoveIsInCorridor(player, direction, corridors) {
     const position = player.getPosition();
+    let inCorridor = false;
+    let isOnPlatform = false;
     const nextPosition = { x: position.x + direction[0], y: position.y + direction[1] };
     for (let i = 0; i < corridors.length; i++) {
-        if (nextPosition.x >= corridors[i].x1 && nextPosition.x <= corridors[i].x2 && nextPosition.y >= corridors[i].y1 && nextPosition.y <= corridors[i].y2) {
-            return true;
+        if (!inCorridor) {
+            if (nextPosition.x > corridors[i].x1 && nextPosition.x <= corridors[i].x1 + corridors[i].width
+                && nextPosition.y > corridors[i].y1 && nextPosition.y <= corridors[i].y1 + corridors[i].height) {
+                inCorridor = true;
+            }
         }
+        if (!isOnPlatform) {
+            if (position.x > corridors[i].x1 - 1 && position.x < corridors[i].x1 + corridors[i].width + 1
+                && position.y > corridors[i].y1 - 1 && position.y < corridors[i].y1 + corridors[i].height + 1) {
+                isOnPlatform = true;
+            }
+        }
+
     }
-    return false;
+    return [inCorridor, isOnPlatform];
 }
 
 export function checkIfPlayerIsOnEndPoint(player, endPoint) {
