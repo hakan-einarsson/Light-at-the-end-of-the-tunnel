@@ -84,7 +84,10 @@ export class Canvas {
         this.context.drawImage(image, x, y, width, height);
     }
 
-    drawButton(x, y, text) {
+    drawButton(button) {
+        let x = button.x;
+        let y = button.y;
+        let text = button.text;
         this.context.fillStyle = "#000";
         this.context.strokeStyle = "#c8cdcc";
         this.context.font = `24px Arial`;
