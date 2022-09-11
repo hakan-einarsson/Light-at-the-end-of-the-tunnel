@@ -1,5 +1,3 @@
-import { Level } from "./Level";
-
 export const levels = [
     [
         1,
@@ -16,7 +14,7 @@ export const levels = [
                 [17, 31, 10, 10],
             ]
         ], [5, 10], [25, 38],
-        20, [], []
+        20, [], [], 3
     ],
     [
         2,

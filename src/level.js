@@ -1,7 +1,7 @@
 import { Corridor } from "./Corridor";
 
 export class Level {
-    constructor(name, size, mapData, startPoint, endPoint, time, switches = [], gems = []) {
+    constructor(name, size, mapData, startPoint, endPoint, time, switches = [], gems = [], timer = 0) {
         this.name = name;
         this.size = size;
         this.startPoint = startPoint;
@@ -10,6 +10,8 @@ export class Level {
         this.switches = switches;
         this.gems = gems;
         this.map = this.setUpMap(mapData);
+        this.timer = timer;
+        this.previosTime = 0;
     }
 
     setUpMap(mapData) {
@@ -53,6 +55,22 @@ export class Level {
         context.fillStyle = 'grey';
         context.fill();
     }
+    startTimer() {
+        this.timerRunning = true;
+        this.previosTime = new Date().getTime();
+    }
+    checkTimer() {
+        if (this.timerRunning) {
+            const currentTime = new Date().getTime();
+            const elapsedTime = Math.floor((currentTime - this.previosTime) / 1000);
+            if (elapsedTime == this.time) {
+                this.previosTime = currentTime;
+                return true;
+            }
+        }
+        return false;
+    }
+
     delete(type, index) {
         if (type === 'switches') {
             this.switches.splice(index, 1);
