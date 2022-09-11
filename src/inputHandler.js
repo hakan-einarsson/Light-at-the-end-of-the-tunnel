@@ -2,6 +2,30 @@ import { keyPressed, gamepadPressed, keyMap } from 'kontra';
 
 export function inputHandler(player, corridors) {
     const direction = [0, 0];
+
+    document.onclick = () => {
+        var x = event.clientX;     // Get the horizontal coordinate
+        var y = event.clientY;     // Get the vertical coordinate
+
+        x = ((x-700)/10);
+        y = y/10
+        if(x >= player.position._x){
+            direction[0] += 2;
+        }else{
+            direction[0] -= 2;
+        }
+
+        if(y >= player.position._y){
+            direction[1] += 2;
+        }else{
+            direction[1] -= 2;
+        }
+     
+        const checkNextMove = checkIfNextMoveIsInCorridor(player, direction, corridors)
+        checkNextMove[0] && move(player, direction);
+        return checkNextMove[1];
+    }
+
     if (keyPressed(keyMap.ArrowDown) || keyPressed('s') || gamepadPressed('dpaddown')) {
         direction[1] += 1;
     }
