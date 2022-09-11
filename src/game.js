@@ -73,14 +73,19 @@ preloadResources().then(images => {
     let opacityChange = 0;
     let gameCleared = false;
     let stageLost = false;
+    var fireSpace = false;
 
-
-
+    document.addEventListener("keyup", (event) => {
+        // if space is released
+        if (event.keyCode == 32) {
+            fireSpace = false
+        }
+    });
 
     let loop = GameLoop({
         update: function () {
             if (gameState == 1) {
-                if (checkStartGame(startButton)) {
+                if (checkStartGame(fireSpace)) {
                     startMusic();
                     gameState = 2;
                     setLevelProperties(player);
@@ -130,8 +135,10 @@ preloadResources().then(images => {
                     introTextTimer.start();
                 }
                 showIntro();
-                if (checkStartGame({})) {
+                if (checkStartGame(fireSpace)) {
+                    fireSpace = true;
                     gameState = 1;
+                    
                 }
             }
             if (gameState == 1) {
@@ -170,7 +177,7 @@ preloadResources().then(images => {
                 textLayerCanvas.clear();
                 textLayerCanvas.drawYouLooseText();
                 textLayerCanvas.drawButton(new Button(256, 350, 'Retry'))
-                if (checkStartGame({})) {
+                if (checkStartGame(fireSpace)) {
                     startMusic();
                     gameState = 2;
                     setLevelProperties(player);
@@ -388,8 +395,6 @@ function centerHorizontalOnScreen(canvas) {
     canvas.style.left = horizontalOffset + 'px';
 
 }
-
-
 
 
 

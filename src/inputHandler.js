@@ -19,7 +19,12 @@ export function inputHandler(player, corridors) {
     return checkNextMove[1];
 }
 
-export function checkStartGame(button) {
+export function checkStartGame(fireSpace) {
+    
+    if(fireSpace === true) {
+        return false;
+    }
+
     if (keyPressed(keyMap.Space) || gamepadPressed('south') || gamepadPressed('start')) {
         return true;
     }
