@@ -12,23 +12,22 @@ export class Canvas {
     drawText(text) {
         this.context.font = text.font;
         this.context.fillStyle = text.color;
-        let width = this.context.measureText(text.text).width;
-        let x = text.x - width / 2;
+        let x = text.x
+        if (!text.left) {
+            let width = this.context.measureText(text.text).width;
+            x = text.x - width / 2;
+        }
+
         this.context.fillText(text.text, x, text.y);
     }
     drawFadingText(fadingText) {
-        // let text = fadingText.text;
-        // let font = `${fadingText.size}px Arial`;
-        // let color = `rgb(255, 255, 255, ${fadingText.opacity})`;
-        // let x = fadingText.x;
-        // let y = fadingText.y;
-
         this.drawText({
             text: fadingText.text,
             font: `${fadingText.size}px Arial`,
             color: `rgba(255, 255, 255, ${fadingText.opacity})`,
             x: fadingText.position[0],
-            y: fadingText.position[1]
+            y: fadingText.position[1],
+            left: fadingText.left
         });
     }
     drawPlayerLight(x, y, r, factor) {

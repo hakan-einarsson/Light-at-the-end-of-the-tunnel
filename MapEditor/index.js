@@ -225,12 +225,14 @@ deleteButton.onclick = function () {
 editWidth.onclick = function () {
     if (editCorridor > -1) {
         corridors[version][editCorridor].width = parseInt(editWidth.value);
+        corridors[version][editCorridor].x2 = corridors[version][editCorridor].x1 + corridors[version][editCorridor].width;
     }
 }
 
 editHeight.onclick = function () {
     if (editCorridor > -1) {
         corridors[version][editCorridor].height = parseInt(editHeight.value);
+        corridors[version][editCorridor].y2 = corridors[version][editCorridor].y1 + corridors[version][editCorridor].height;
     }
 }
 

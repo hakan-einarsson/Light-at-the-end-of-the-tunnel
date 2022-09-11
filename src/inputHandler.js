@@ -50,7 +50,7 @@ function checkIfNextMoveIsInCorridor(player, direction, corridors) {
 }
 
 export function checkIfPlayerIsOnEndPoint(player, endPoint) {
-    let endpointRadius = 5;
+    let endpointRadius = 3;
     const position = player.getPosition();
     const playerRadius = player.rad;
     if (position.x + playerRadius >= endPoint[0] - endpointRadius &&
@@ -64,7 +64,7 @@ export function checkIfPlayerIsOnEndPoint(player, endPoint) {
 
 export function checkIfPlayerIsOnSwitch(player, switchBounds) {
     const position = player.getPosition();
-    const switchSize = 11;
+    const switchSize = 12;
     if (position.x > switchBounds[0] &&
         position.x < switchBounds[0] + switchSize &&
         position.y > switchBounds[1] &&
@@ -77,11 +77,11 @@ export function checkIfPlayerIsOnSwitch(player, switchBounds) {
 
 export function checkIfPlayerIsOnGem(player, gem) {
     const position = player.getPosition();
-    const gemRadius = 6;
-    if (position.x + player.rad >= gem[0] + 3 - gemRadius &&
-        position.x - player.rad <= gem[0] + 3 + gemRadius &&
-        position.y + player.rad >= gem[1] + 3 - gemRadius &&
-        position.y - player.rad <= gem[1] + 3 + gemRadius) {
+    const gemRadius = 4;
+    if (position.x + player.rad >= gem[0] + 2 - gemRadius &&
+        position.x - player.rad <= gem[0] + 2 + gemRadius &&
+        position.y + player.rad >= gem[1] + 2 - gemRadius &&
+        position.y - player.rad <= gem[1] + 2 + gemRadius) {
         return true;
     }
     return false;
