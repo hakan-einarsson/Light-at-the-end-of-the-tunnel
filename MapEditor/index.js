@@ -362,7 +362,7 @@ canvas.onclick = function (e) {
             switches.push([e.offsetX - 5, e.offsetY - 5]);
         }
         if (drawObject == 4) {
-            gems.push([e.offsetX - 5, e.offsetY - 5]);
+            gems.push([e.offsetX, e.offsetY]);
         }
     } else if (editing) {
         startDrawing = false;
@@ -529,7 +529,7 @@ function gameLoop() {
         if (gems.length > 0) {
             context.beginPath();
             gems.forEach(gemPos => {
-                context.rect(gemPos[0], gemPos[1], 10, 10);
+                context.rect(gemPos[0] - 5, gemPos[1] - 5, 10, 10);
             });
             context.closePath();
             context.fillStyle = 'orange';

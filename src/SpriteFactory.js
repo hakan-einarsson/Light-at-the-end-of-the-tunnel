@@ -50,8 +50,8 @@ export class SpriteFactory {
 
     getGem(position) {
         const sprite = new Sprite({
-            x: position[0] - 3,
-            y: position[1] - 3,
+            x: position[0] - 8,
+            y: position[1] - 8,
             animations: this.spriteSheet.animations
         });
         sprite.playAnimation('gem');
@@ -59,8 +59,8 @@ export class SpriteFactory {
     }
     getExplodingGem(position) {
         const sprite = new Sprite({
-            x: position[0] - 3,
-            y: position[1] - 3,
+            x: position[0] - 8,
+            y: position[1] - 8,
             animations: this.spriteSheet.animations,
             startTime: new Date().getTime(),
             animationOver: function () {
