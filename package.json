@@ -1,5 +1,5 @@
 {
-  "name": "light-at-the-end-of-the-tunnel",
+  "name": "the-soothsayer-and-the-carpenter",
   "version": "1.0.0",
   "description": "Game for js13k",
   "main": "game.js",
@@ -16,5 +16,5 @@
     "build": "webpack"
   },
   "author": "",
-  "license": "MIT"
+  "license": ""
 }
