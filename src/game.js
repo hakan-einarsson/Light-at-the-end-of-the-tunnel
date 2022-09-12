@@ -111,6 +111,7 @@ preloadResources().then(images => {
                     if (currentLevelVersion >= currentLevelMap.map.length) {
                         currentLevelVersion = 0;
                     }
+                    drawLevelMap(floorTile);
                 }
                 checkEndPoint();
                 checkSwitches();

@@ -62,7 +62,7 @@ export class Level {
     checkTimer() {
         if (this.timerRunning) {
             const currentTime = new Date().getTime();
-            const elapsedTime = Math.floor((currentTime - this.previosTime) / 1000);
+            const elapsedTime = Math.floor((currentTime - this.previosTime) / 100);
             if (elapsedTime == this.timer) {
                 this.previosTime = currentTime;
                 return true;
