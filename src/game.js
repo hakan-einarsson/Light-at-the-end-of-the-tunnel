@@ -43,7 +43,7 @@ preloadResources().then(images => {
      * 5 - game complete
      */
     let gameState = 0;
-    let currentLevel = 7;
+    let currentLevel = 1;
     let currentLevelVersion = 0;
     let currentLevelMap;
     let numberOfLevels = levels.length;
@@ -131,6 +131,17 @@ preloadResources().then(images => {
                 }
                 player.update();
             }
+            if (gameState == 4) {
+                stopMusic();
+                if (checkStartGame()) {
+                    currentLevel = 1;
+                    startMusic();
+                    gameState = 2;
+                    setLevelProperties(player);
+                    player.playAnimation('idle');
+                    drawLevelMap(floorTile);
+                }
+            }
         },
         render: function () {
             if (gameState == 0) {
@@ -185,14 +196,6 @@ preloadResources().then(images => {
                 textLayerCanvas.clear();
                 textLayerCanvas.drawYouLooseText();
                 textLayerCanvas.drawButton(new Button(256, 350, 'Retry'))
-                if (checkStartGame()) {
-                    startMusic();
-                    gameState = 2;
-                    setLevelProperties(player);
-                    player.playAnimation('idle');
-                    drawLevelMap(floorTile);
-                }
-                stopMusic();
             }
             if (gameState == 5) {
                 backgroundCanvas.clear();
@@ -245,6 +248,7 @@ preloadResources().then(images => {
     function stopMusic() {
         if (!!music) {
             music.stop();
+            music = null;
         }
     }
     function checkEndPoint() {

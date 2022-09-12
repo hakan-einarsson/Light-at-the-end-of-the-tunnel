@@ -49,7 +49,7 @@ export class Canvas {
         this.context.fill();
     }
     drawYouLooseText() {
-        let text = 'Life was never for you...';
+        let text = '"We lost him"';
         let size = this.canvas.height / 12;
         let font = `${size}px Arial`;
         let x = this.canvas.width / 2;
