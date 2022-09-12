@@ -19,16 +19,17 @@ export function inputHandler(player, corridors) {
     return checkNextMove[1];
 }
 
-export function checkStartGame(fireSpace) {
-    
-    if(fireSpace === true) {
-        return false;
-    }
+export function checkStartGame() {
 
-    if (keyPressed(keyMap.Space) || gamepadPressed('south') || gamepadPressed('start')) {
-        return true;
-    }
-    return false;
+    return keyPressed(keyMap.Space) || gamepadPressed('south') || gamepadPressed('start')
+    // if(fireSpace === true) {
+    //     return false;
+    // }
+
+    // if (keyPressed(keyMap.Space) || gamepadPressed('south') || gamepadPressed('start')) {
+    //     return true;
+    // }
+    // return false;
 }
 
 function checkIfNextMoveIsInCorridor(player, direction, corridors) {

@@ -34,8 +34,6 @@ initKeys();
 initGamepad();
 preloadResources().then(images => {
     let music;
-    let gameStarted = false;
-    let startButton = null;
     /**
      * 0 - intro
      * 1 - start screen
@@ -45,9 +43,6 @@ preloadResources().then(images => {
      * 5 - game complete
      */
     let gameState = 0;
-    // document.onclick = () => {
-    //     startMusic();
-    // }
     let currentLevel = 0;
     let currentLevelVersion = 0;
     let currentLevelMap;
@@ -68,28 +63,35 @@ preloadResources().then(images => {
     const activeFadingTexts = [];
     let deathAnimationTicker = 0;
     let deathAnimationTickerMax = 60;
-    let deathAnimationTickerActive = false;
     let darkMode = false;
     let opacityChange = 0;
     let gameCleared = false;
-    let stageLost = false;
-    var fireSpace = false;
-
-    document.addEventListener("keyup", (event) => {
-        // if space is released
-        if (event.keyCode == 32) {
-            fireSpace = false
-        }
-    });
+    let fireStart = false;
 
     let loop = GameLoop({
         update: function () {
+            if (gameState == 0) {
+                if (fireStart) {
+                    fireStart = checkStartGame()
+                    console.log(firestart)
+                } else {
+                    fireStart = checkStartGame()
+                    if (checkStartGame()) {
+                        gameState = 1;
+                    }
+                }
+            }
             if (gameState == 1) {
-                if (checkStartGame(fireSpace)) {
-                    startMusic();
-                    gameState = 2;
-                    setLevelProperties(player);
-                    drawLevelMap(floorTile);
+                if (fireStart) {
+                    fireStart = checkStartGame()
+                } else {
+                    fireStart = checkStartGame()
+                    if (checkStartGame()) {
+                        startMusic();
+                        gameState = 2;
+                        setLevelProperties(player);
+                        drawLevelMap(floorTile);
+                    }
                 }
             }
             if (gameState == 2) {
@@ -101,9 +103,7 @@ preloadResources().then(images => {
                     }
                     if (timeRounded == levelTime) {
                         gameState = 3;
-                        stageLost = true;
                         player.playAnimation('death');
-                        deathAnimationTickerActive = true;
                     }
                 }
                 checkEndPoint();
@@ -112,9 +112,7 @@ preloadResources().then(images => {
                 checkExplodingGems();
                 if (!inputHandler(player, currentLevelMap.map[currentLevelVersion]) && !gameCleared) {
                     gameState = 3;
-                    stageLost = true;
                     player.playAnimation('death');
-                    deathAnimationTickerActive = true;
                 }
                 player.update();
             }
@@ -135,11 +133,6 @@ preloadResources().then(images => {
                     introTextTimer.start();
                 }
                 showIntro();
-                if (checkStartGame(fireSpace)) {
-                    fireSpace = true;
-                    gameState = 1;
-                    
-                }
             }
             if (gameState == 1) {
                 showStartScreen();
@@ -177,7 +170,7 @@ preloadResources().then(images => {
                 textLayerCanvas.clear();
                 textLayerCanvas.drawYouLooseText();
                 textLayerCanvas.drawButton(new Button(256, 350, 'Retry'))
-                if (checkStartGame(fireSpace)) {
+                if (checkStartGame()) {
                     startMusic();
                     gameState = 2;
                     setLevelProperties(player);
@@ -201,10 +194,7 @@ preloadResources().then(images => {
     //game loop functions
     function showIntro() {
         let fontSize = 16;
-        // let writePoints = [0.1, 3.6, 7.2, 7.3, 7.4, 11, 11.1, 11.2, 14.8, 18.4, 22, 25.6, 29.2, 29.3, 32.9, 33, 36.6];
-        // let fadingTextPoints = [3.5, 7.1, 7.2, 7.3, 10.9, 11, 11.1, 14.7, 18.3, 21.9, 25.5, 29.1, 32.8, 32.9, 36.5, 36.6];
         introTextTimer.tick()
-        //round intro text to nearest 0.1
         let introTextIndex = Math.round(introTextTimer.timeElapsed * 10) / 10;
         if (introText[0].time == introTextIndex) {
 
@@ -213,35 +203,8 @@ preloadResources().then(images => {
                 activeTexts.push(new Text(text.text, 256, 256 - fontSize + (fontSize + 10) * (activeTexts.length), fontSize, text.color));
             });
             introText.splice(0, 1);
-
-            //check if intro text is already in active fading texts
-            // let isWritten = activeTexts.filter(text => text.text == introText[writeIndex]).length > 0;
-            // if (!isWritten) {
-            //     console.log('Adding active text: ' + introText[writeIndex]);
-            //     activeTexts.push(new Text(introText[writeIndex], 256, 256 - fontSize + (fontSize + 10) * (activeTexts.length), fontSize, '#fff'));
-            //activeFadingTexts.push(new FadingText([256, 256 - fontSize + (fontSize + 10) * (activeFadingTexts.length)], introText[writeIndex], fontSize));
-
         }
-        // if (fadingTextPoints.includes(introTextIndex)) {
-        //     let fadingTextIndex = fadingTextPoints.indexOf(introTextIndex);
-        //     let isFading = activeFadingTexts.filter(text => text.text == introText[fadingTextIndex]).length > 0;
-        //     if (!isFading) {
-        //         console.log('Adding active fading text: ' + introText[fadingTextIndex]);
-        //         activeFadingTexts.push(new FadingText([256, 256 - fontSize + (fontSize + 10) * (activeFadingTexts.length)], introText[fadingTextIndex], fontSize));
-        //         console.log('Removing active text: ' + introText[fadingTextIndex]);
-        //         activeTexts.splice(0, activeTexts.length);
-        //         console.log('Active texts: ' + activeTexts.length);
-        //     }
-        // }
         drawTexts();
-        // activeFadingTexts.forEach((text, index) => {
-        //     if (text.opacity > 0) {
-        //         textLayerCanvas.drawFadingText(text);
-        //         text.reduceOpacity(0.5);
-        //     } else {
-        //         activeFadingTexts.splice(index, 1);
-        //     }
-        // });
         if (introText.length == 0) {
             gameState = 1;
         }
@@ -256,7 +219,7 @@ preloadResources().then(images => {
         backgroundCanvas.context.fillStyle = '#000';
         backgroundCanvas.context.fill();
         backgroundCanvas.context.drawImage(splash, 14, 16);
-        startButton = textLayerCanvas.drawButton(new Button(256, 350, 'Start'))
+        textLayerCanvas.drawButton(new Button(256, 350, 'Start'))
 
     }
     function startMusic() {
