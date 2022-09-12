@@ -106,6 +106,12 @@ preloadResources().then(images => {
                         player.playAnimation('death');
                     }
                 }
+                if (currentLevelMap.checkTimer()) {
+                    currentLevelVersion++;
+                    if (currentLevelVersion >= currentLevelMap.map.length) {
+                        currentLevelVersion = 0;
+                    }
+                }
                 checkEndPoint();
                 checkSwitches();
                 checkGems();
@@ -315,6 +321,7 @@ preloadResources().then(images => {
 
     function setLevelProperties(player) {
         currentLevelMap = new Level(...levels[currentLevel]);
+        currentLevelMap.timer > 0 && currentLevelMap.startTimer();
         levelTime = currentLevelMap.time;
         opacityChange = 1 / (levelTime - 3);
         player.setPosition(currentLevelMap.startPoint[0], currentLevelMap.startPoint[1]);

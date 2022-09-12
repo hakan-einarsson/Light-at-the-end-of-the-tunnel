@@ -63,7 +63,7 @@ export class Level {
         if (this.timerRunning) {
             const currentTime = new Date().getTime();
             const elapsedTime = Math.floor((currentTime - this.previosTime) / 1000);
-            if (elapsedTime == this.time) {
+            if (elapsedTime == this.timer) {
                 this.previosTime = currentTime;
                 return true;
             }
