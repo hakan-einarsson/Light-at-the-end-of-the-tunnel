@@ -11,7 +11,7 @@ import { inputHandler, checkIfPlayerIsOnEndPoint, checkIfPlayerIsOnSwitch, check
 import { Timer } from './Timer.js';
 import { preloadResources, drawEndPoint } from './GameUtilies.js';
 import { FadingText } from './FadingText.js';
-import { fadingTexts } from './fadingTexts.js';
+import { fadingTexts, gemTexts } from './fadingTexts.js';
 import { pickupSound, newLevelSound } from './Sounds.js';
 import { playMusic } from './Music.js';
 import { SpriteFactory } from './SpriteFactory.js';
@@ -43,7 +43,7 @@ preloadResources().then(images => {
      * 5 - game complete
      */
     let gameState = 0;
-    let currentLevel = 0;
+    let currentLevel = 7;
     let currentLevelVersion = 0;
     let currentLevelMap;
     let numberOfLevels = levels.length;
@@ -152,6 +152,14 @@ preloadResources().then(images => {
                 renderGems();
                 renderExplodingGems();
                 player.render();
+                if (activeFadingTexts.length > 0) {
+                    activeFadingTexts.forEach(text => {
+                        if (text.opacity > 0) {
+                            textLayerCanvas.drawFadingText(text);
+                            text.reduceOpacity();
+                        }
+                    });
+                }
                 if (levelText.opacity) {
                     textLayerCanvas.drawFadingText(levelText);
                     levelText.reduceOpacity();
@@ -275,6 +283,8 @@ preloadResources().then(images => {
                 textTimer.reset();
                 resetFadingTexts();
                 pickupSound();
+                getScaleOfCanvas();
+                activeFadingTexts.push(new FadingText([player.x / getScaleOfCanvas(), (player.y - 10) / getScaleOfCanvas()], gemTexts[Math.floor(Math.random() * gemTexts.length)], 20));
             }
         });
     }
@@ -351,6 +361,10 @@ preloadResources().then(images => {
         if (currentLevel <= numberOfLevels) {
             currentLevelMap.draw(backgroundCanvas, floorTile, currentLevelVersion);
         }
+    }
+
+    function getScaleOfCanvas() {
+        return canvas.width / textLayerCanvas.canvas.width;
     }
 
 });

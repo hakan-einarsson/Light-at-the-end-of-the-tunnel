@@ -64,9 +64,13 @@ export class Canvas {
         });
     }
     drawYouWinText() {
-        let text = 'You win!';
-        let size = this.canvas.height / 12;
-        let font = `${size}px Arial`;
+        let text = `
+
+        "They will take care off you now my boy!"\n
+        
+        `;
+        // let size = this.canvas.height / 12;
+        let font = `${20}px Arial`;
         let x = this.canvas.width / 2;
         let y = this.canvas.height / 2;
 
