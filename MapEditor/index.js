@@ -67,6 +67,7 @@ const deleteVersion = document.getElementById('delete-version');
 const showOnlyCorridorsCheckbox = document.getElementById('corridors-only');
 const levelTimeInput = document.getElementById('level-time');
 const levelNumberInput = document.getElementById('level-number');
+const timerInput = document.getElementById('level-timer');
 
 currentVersionSelect.value = version;
 copyVersionsSelect.value = version;
@@ -180,7 +181,7 @@ loadButton.onclick = function () {
 
 
 printButton.onclick = function () {
-    let code = 'new Level(\n';
+    let code = '[\n';
     code += `${levelNumber},\n`;
     code += `${size},\n`;
     code += '[\n';
@@ -198,11 +199,14 @@ printButton.onclick = function () {
     switches.forEach(switchObj => {
         code += `[${switchObj[0]}, ${switchObj[1]}],`;
     });
+    if (switches.length > 0) code = code.substring(0, code.length - 1);
     code += '],[';
     gems.forEach(gemObj => {
         code += `[${gemObj[0]}, ${gemObj[1]}],`;
     });
-    code += '])';
+    if (gems.length > 0) code = code.substring(0, code.length - 1);
+    code += '],';
+    code += timerInput.value + '\n]';
     const textarea = document.getElementById('code');
     textarea.value = code;
 }
