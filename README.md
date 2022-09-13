@@ -1,5 +1,10 @@
 # The Soothsayer and the Carpenter
 
+A game for the [js13kGames](https://js13kgames.com/).
+Help guide the spirit of a dying young boy through deaths labyrinth back to life.
+
+Support for gamepad and keyboard, arrows and w,s,a,d
+
 Libraries we've used:
 [Kontra](https://github.com/straker/kontra),
 [ZzFX](https://github.com/KilledByAPixel/ZzFX),
