@@ -1,145 +1,414 @@
-/*
-    LittleJS Stress Test
-    - Render over 50,000 sprites at 60 fps in Chrome
-    - Uses glOverlay mode in Firefox to improve performance
-    - Also plays music in the background with zzfxm
-    - All code and the image is contained in this html file
-    - Text displayed using a div so it appears on top in glOverlay mode
-*/
+import {
+    init,
+    GameLoop,
+    setImagePath,
+    initKeys,
+    initGamepad,
+} from 'kontra';
+import { levels } from './levels.js';
+import { Canvas } from './Canvas.js';
+import { inputHandler, checkIfPlayerIsOnEndPoint, checkIfPlayerIsOnSwitch, checkIfPlayerIsOnGem, checkStartGame } from './inputHandler.js';
+import { Timer } from './Timer.js';
+import { preloadResources, drawEndPoint } from './GameUtilies.js';
+import { FadingText } from './FadingText.js';
+import { fadingTexts, gemTexts } from './fadingTexts.js';
+import { pickupSound, newLevelSound } from './Sounds.js';
+import { playMusic } from './Music.js';
+import { SpriteFactory } from './SpriteFactory.js';
+import { Button } from './Button.js';
+import { introText, endTexts } from './introText.js';
+import { Level } from './Level.js';
+import { Text } from './Text.js';
+let { canvas, context } = init(document.getElementById('kontra'));
+canvas.style.backgroundColor = 'rgba(0, 0, 0, 0)'
+//center canvas on screen
+centerHorizontalOnScreen(canvas);
+const backgroundCanvas = new Canvas(document.getElementById('background'));
+centerHorizontalOnScreen(backgroundCanvas.canvas);
+const textLayerCanvas = new Canvas(document.getElementById('text-layer'));
+centerHorizontalOnScreen(textLayerCanvas.canvas);
+const lightLayerCanvas = new Canvas(document.getElementById('light-layer'));
+centerHorizontalOnScreen(lightLayerCanvas.canvas);
+setImagePath('./assets/');
+initKeys();
+initGamepad();
+preloadResources().then(images => {
+    let music;
+    /**
+     * 0 - intro
+     * 1 - start screen
+     * 2 - game
+     * 3 - dying
+     * 4 - game over
+     * 5 - game complete
+     */
+    let gameState = 0;
+    let currentLevel = 1;
+    let currentLevelVersion = 0;
+    let currentLevelMap;
+    let numberOfLevels = levels.length;
+    let gems = [];
+    let switches = [];
+    const explodingGems = [];
+    let levelTime = 0;
+    let spriteFactory = new SpriteFactory(images[0]);
+    const player = spriteFactory.getPlayer();
+    const floorTile = images[1];
+    const splash = images[2];
+    let levelText;
+    const timer = new Timer();
+    const textTimer = new Timer();
+    const introTextTimer = new Timer();
+    const activeTexts = [];
+    const activeFadingTexts = [];
+    let deathAnimationTicker = 0;
+    let deathAnimationTickerMax = 60;
+    let darkMode = false;
+    let opacityChange = 0;
+    let gameCleared = false;
+    let fireStart = false;
 
-'use strict';
+    let loop = GameLoop({
+        update: function () {
+            if (gameState == 0) {
+                if (fireStart) {
+                    fireStart = checkStartGame()
+                } else {
+                    fireStart = checkStartGame()
+                    if (checkStartGame()) {
+                        gameState = 1;
+                        introTextTimer.reset();
+                        activeTexts.splice(0, activeTexts.length);
+                    }
+                }
+            }
+            if (gameState == 1) {
+                if (fireStart) {
+                    fireStart = checkStartGame()
+                } else {
+                    fireStart = checkStartGame()
+                    if (checkStartGame()) {
+                        startMusic();
+                        gameState = 2;
+                        setLevelProperties(player);
+                        drawLevelMap(floorTile);
+                    }
+                }
+            }
+            if (gameState == 2) {
+                if (timer.tick()) {
+                    let timeRounded = Math.round(timer.timeElapsed * 10) / 10;
+                    if (timeRounded == levelTime - 5) {
+                        darkMode = true;
+                        textTimer.start();
+                    }
+                    if (timeRounded == levelTime) {
+                        gameState = 3;
+                        player.playAnimation('death');
+                    }
+                }
+                if (currentLevelMap.checkTimer()) {
+                    currentLevelVersion++;
+                    if (currentLevelVersion >= currentLevelMap.map.length) {
+                        currentLevelVersion = 0;
+                    }
+                    drawLevelMap(floorTile);
+                }
+                checkEndPoint();
+                checkSwitches();
+                checkGems();
+                checkExplodingGems();
+                if (!inputHandler(player, currentLevelMap.map[currentLevelVersion]) && !gameCleared) {
+                    gameState = 3;
+                    player.playAnimation('death');
+                }
+                player.update();
+            }
+            if (gameState == 3) {
+                deathAnimationTicker++;
+                if (deathAnimationTicker == deathAnimationTickerMax) {
+                    deathAnimationTicker = 0;
+                    gameState = 4;
+                }
+                player.update();
+            }
+            if (gameState == 4) {
+                stopMusic();
+                if (checkStartGame()) {
+                    currentLevel = 1;
+                    startMusic();
+                    gameState = 2;
+                    setLevelProperties(player);
+                    player.playAnimation('idle');
+                    drawLevelMap(floorTile);
+                }
+            }
+        },
+        render: function () {
+            if (gameState == 0) {
+                backgroundCanvas.setSize(128);
+                textLayerCanvas.clear();
+                if (!introTextTimer.isRunning) {
+                    introTextTimer.start();
+                }
+                showIntro();
+            }
+            if (gameState == 1) {
+                showStartScreen();
+            }
+            if (gameState == 2) {
+                drawEndPoint(context, currentLevelMap.endPoint);
+                textLayerCanvas.clear();
+                lightLayerCanvas.clear();
+                drawPlayerLight();
+                renderGems();
+                renderExplodingGems();
+                player.render();
+                if (activeFadingTexts.length > 0) {
+                    activeFadingTexts.forEach(text => {
+                        if (text.opacity > 0) {
+                            textLayerCanvas.drawFadingText(text);
+                            text.reduceOpacity();
+                        }
+                    });
+                }
+                if (levelText.opacity) {
+                    textLayerCanvas.drawFadingText(levelText);
+                    levelText.reduceOpacity();
+                }
+                if (darkMode) {
+                    textTimer.tick();
+                    fadingTexts.forEach((text, index) => {
+                        if (index <= textTimer.timeElapsed && text.opacity > 0) {
+                            textLayerCanvas.drawFadingText(text);
+                            text.reduceOpacity();
+                        }
+                    });
+                }
+            }
+            if (gameState == 3) {
 
-// keep our own list of simple sprites and track fps
-let sprites, timeMS, showFPS, statsDisplay, spriteColor, spriteAdditiveColor, musicSource;
+                player.render();
+                lightLayerCanvas.clear();
+                backgroundCanvas.clear();
+            }
+            if (gameState == 4) {
+                backgroundCanvas.clear();
+                textLayerCanvas.clear();
+                textLayerCanvas.drawYouLooseText();
+                textLayerCanvas.drawButton(new Button(256, 350, 'Retry'))
+            }
+            if (gameState == 5) {
+                backgroundCanvas.clear();
+                textLayerCanvas.clear();
+                stopMusic();
+                textLayerCanvas.clear();
+                if (!introTextTimer.isRunning) {
+                    introTextTimer.start();
+                }
+                showEnd();
 
-///////////////////////////////////////////////////////////////////////////////
+            }
+        }
+    });
 
-class TestObject extends EngineObject 
-{
-    constructor(pos)
-    {
-        super(pos, vec2(1), 0, vec2(16), 0, spriteColor);
+    loop.start();
 
-        this.additiveColor = spriteAdditiveColor;
-        this.setCollision(1, 1);
-    }
-}
 
-///////////////////////////////////////////////////////////////////////////////
-function gameInit()
-{
-    // create tile collision
-    initTileCollision(vec2(80,50));
-    for (let x = tileCollisionSize.x; x--;)
-        setTileCollisionData(vec2(x,0), 1), setTileCollisionData(vec2(x,tileCollisionSize.y-1), 1);
-    for (let y = tileCollisionSize.y; y--;)
-        setTileCollisionData(vec2(0,y), 1), setTileCollisionData(vec2(tileCollisionSize.x-1,y), 1);
-
-    // set things up
-    cameraScale = 16;
-    cameraPos = tileCollisionSize.scale(.5);
-    mainCanvas.style.background = '#555';
-    sprites = [];
-    gravity = -.01;
-
-    // display stats using a div so when using glOverlay it still appears on top
-    document.body.appendChild(statsDisplay = document.createElement('div'));
-    statsDisplay.style = 'position:absolute;width:100%;top:50%;left:50%;transform:translate(-50%,-50%);font-size:6em;text-align:center;font-family:arial;user-select:none';
-}
-
-///////////////////////////////////////////////////////////////////////////////
-function gameUpdate()
-{
-    if (!musicSource && mouseWasPressed(0))
-        musicSource = music.play();
-
-    // mouse click = change color
-    if (mouseWasPressed(0) || mouseIsDown(2))
-        spriteColor = randColor(), spriteAdditiveColor = randColor(new Color(.5,.5,.5, 0), new Color(0,0,0,0));
-
-    // right click = drop test object
-    if (mouseIsDown(2))
-        new TestObject(mousePos);
-
-    // mouse hold = add objects
-    if (mouseIsDown(0))
-        for (let i=100;i--;)
-            sprites.push({
-                pos:mousePos.add(randInCircle(2)),
-                angle:rand(), 
-                velocity:randInCircle(.2),
-                color:spriteColor = spriteColor.mutate(), 
-                additiveColor:spriteAdditiveColor.mutate()
+    //game loop functions
+    function showIntro() {
+        let fontSize = 16;
+        introTextTimer.tick()
+        let introTextIndex = Math.round(introTextTimer.timeElapsed * 10) / 10;
+        if (introText[0].time == introTextIndex) {
+            activeTexts.splice(0, activeTexts.length);
+            introText[0].dialog.forEach((text) => {
+                activeTexts.push(new Text(text.text, 256, 256 - fontSize + (fontSize + 10) * (activeTexts.length), fontSize, text.color));
             });
-    
-    // mouse wheel = zoom
-    cameraScale = clamp(cameraScale*(1-mouseWheel/10), 1, 1e3);
-}
+            introText.splice(0, 1);
+        }
+        drawTexts();
+        if (introText.length == 0) {
+            gameState = 1;
+            introTextIndex.reset();
+            activeTexts.splice(0, activeTexts.length);
+        }
 
-///////////////////////////////////////////////////////////////////////////////
-function gameUpdatePost()
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-function gameRender()
-{
-    // track fps and update stats
-    const frameTimeMS = Date.now();
-    showFPS = lerp(.05, showFPS, 1e3/(frameTimeMS - timeMS||1));
-    timeMS = frameTimeMS;
-
-    const spriteCount = sprites.length
-    const objectCount = engineObjects.length;
-    statsDisplay.innerText = 
-        spriteCount + objectCount ?
-            spriteCount + ' Sprites\n' 
-            + objectCount + ' Objects\n' 
-            + showFPS.toFixed(1) + ' FPS'
-        : 'LittleJS Stress Test\nLeft Click = Add Particles\nRight Click = Add Objects';
-
-    const size = vec2(.5);
-    for (const sprite of sprites)
-    {
-        // keep sprites above 0
-        sprite.pos.y = max(sprite.pos.y, 0);
-
-        // apply gravity
-        sprite.velocity.y += gravity;
-        
-        // apply velocity
-        sprite.pos = sprite.pos.add(sprite.velocity);
-
-        // bounce
-        if (sprite.pos.y < 0)
-            sprite.velocity.y = rand(1,.5);
-        if (sprite.pos.x < 0)
-            sprite.pos.x = 0, sprite.velocity.x *= -1;
-        if (sprite.pos.x > tileCollisionSize.x)
-            sprite.pos.x = tileCollisionSize.x, sprite.velocity.x *= -1;
-
-        // rotate sprite
-        sprite.angle += .01*sign(sprite.velocity.x);
-
-        // draw the sprite
-        glDraw(sprite.pos.x, sprite.pos.y, 1, 1, sprite.angle, 0, 0, 1, 1, 
-            sprite.color.rgbaInt(), sprite.additiveColor.rgbaInt());
     }
+
+    function showEnd() {
+        let fontSize = 16;
+        introTextTimer.tick()
+        let endTextIndex = Math.round(introTextTimer.timeElapsed * 10) / 10;
+        if (endTexts.length > 0 && endTexts[0].time == endTextIndex) {
+            activeTexts.splice(0, activeTexts.length);
+            endTexts[0].dialog.forEach((text) => {
+                activeTexts.push(new Text(text.text, 256, 256 - fontSize + (fontSize + 10) * (activeTexts.length), fontSize, text.color));
+            });
+            endTexts.splice(0, 1);
+        }
+        endTexts.length > 0 && drawTexts();
+        if (endTexts.length == 0) {
+            activeTexts.splice(0, activeTexts.length);
+            textLayerCanvas.drawText({ text: 'Thank you for playing our game!', x: 256, y: 256 - 20, font: `20px Arial`, color: 'white' });
+        }
+    }
+
+    function showStartScreen() {
+        textLayerCanvas.clear();
+        backgroundCanvas.setSize(128);
+        backgroundCanvas.clear();
+        backgroundCanvas.context.rect(0, 0, 128, 128);
+        backgroundCanvas.context.fillStyle = '#000';
+        backgroundCanvas.context.fill();
+        backgroundCanvas.context.drawImage(splash, 14, 16);
+        textLayerCanvas.drawButton(new Button(256, 350, 'Start'))
+
+    }
+    function startMusic() {
+        if (!music) {
+            music = new playMusic();
+        }
+    }
+    function stopMusic() {
+        if (!!music) {
+            music.stop();
+            music = null;
+        }
+    }
+    function checkEndPoint() {
+        if (checkIfPlayerIsOnEndPoint(player, currentLevelMap.endPoint)) {
+            currentLevel++;
+            if (currentLevel >= numberOfLevels) {
+                currentLevel = 0;
+                currentLevelVersion = 0;
+                gameCleared = true;
+                gameState = 5;
+                timer.reset();
+            } else {
+                newLevelSound();
+                setLevelProperties(player);
+                drawLevelMap(floorTile);
+            }
+        }
+    }
+    function checkSwitches() {
+        switches.forEach((switchObject, index) => {
+            if (checkIfPlayerIsOnSwitch(player, switchObject)) {
+                switches.splice(index, 1);
+                currentLevelVersion < currentLevelMap.map.length - 1 ? currentLevelVersion++ : currentLevelVersion = 0;
+                drawLevelMap(floorTile);
+            }
+        });
+    }
+    function checkGems() {
+        gems.forEach((gemObject, index) => {
+            if (checkIfPlayerIsOnGem(player, [gemObject.x, gemObject.y])) {
+                gems.splice(index, 1);
+                explodingGems.push(spriteFactory.getExplodingGem([gemObject.x + 2, gemObject.y + 2]));
+                timer.reset();
+                timer.start();
+                darkMode = false;
+                textTimer.reset();
+                resetFadingTexts();
+                pickupSound();
+                getScaleOfCanvas();
+                activeFadingTexts.push(new FadingText([player.x / getScaleOfCanvas(), (player.y - 10) / getScaleOfCanvas()], gemTexts[Math.floor(Math.random() * gemTexts.length)], 20));
+            }
+        });
+    }
+    function checkExplodingGems() {
+        if (explodingGems.length > 0) {
+            explodingGems.forEach((gem, index) => {
+                gem.update();
+                if (gem.animationOver()) {
+                    explodingGems.splice(index, 1);
+                }
+            });
+        }
+    }
+
+    function drawTexts() {
+        activeTexts.forEach((text, index) => {
+            textLayerCanvas.drawText(text);
+        });
+    }
+
+    function drawPlayerLight() {
+        let opacityFactor = opacityChange * (timer.timeElapsed + 1) <= 1 ? opacityChange * (timer.timeElapsed + 1) : 1;
+        lightLayerCanvas.drawPlayerLight(player.x + player.rad * 2, player.y + player.rad * 2, player.rad, opacityFactor);
+    }
+
+    function renderGems() {
+        gems.forEach(gem => {
+            gem.render();
+        });
+    }
+
+    function renderExplodingGems() {
+        if (explodingGems.length > 0) {
+            explodingGems.forEach((gem) => {
+                gem.render();
+            });
+        }
+    }
+
+    function resetFadingTexts() {
+        fadingTexts.forEach(text => {
+            text.reset();
+        });
+    }
+
+    function setLevelProperties(player) {
+        currentLevelMap = new Level(...levels[currentLevel]);
+        currentLevelMap.timer > 0 && currentLevelMap.startTimer();
+        levelTime = currentLevelMap.time;
+        opacityChange = 1 / (levelTime - 3);
+        player.setPosition(currentLevelMap.startPoint[0], currentLevelMap.startPoint[1]);
+        backgroundCanvas.setSize(currentLevelMap.size);
+        lightLayerCanvas.setSize(currentLevelMap.size);
+        canvas.width = currentLevelMap.size;
+        canvas.height = currentLevelMap.size;
+        switches = [];
+        gems = [];
+        currentLevelMap.gems.forEach((gem) => {
+            gems.push(spriteFactory.getGem(gem));
+        });
+        currentLevelMap.switches.forEach((switchObject) => {
+            switches.push(switchObject);
+        });
+        currentLevelVersion = 0;
+        timer.reset();
+        timer.start();
+        textTimer.reset();
+        darkMode = false;
+        resetFadingTexts();
+        levelText = new FadingText([512 / 2, 512 / 2], 'Level ' + (currentLevelMap.name), 50);
+    }
+
+    function drawLevelMap(floorTile) {
+        if (currentLevel <= numberOfLevels) {
+            currentLevelMap.draw(backgroundCanvas, floorTile, currentLevelVersion);
+        }
+    }
+
+    function getScaleOfCanvas() {
+        return canvas.width / textLayerCanvas.canvas.width;
+    }
+
+});
+
+function centerHorizontalOnScreen(canvas) {
+    //get screen width
+    let screenWidth = window.innerWidth;
+    let sizeObjectCanvas = document.getElementById('text-layer');
+    let sizeObjectCanvasWidth = sizeObjectCanvas.offsetWidth;
+    //canvas width is 512, center it horizontally
+    let horizontalOffset = (screenWidth - sizeObjectCanvasWidth) / 2;
+    //set canvas horizontal offset
+    canvas.style.left = horizontalOffset + 'px';
+
 }
 
-///////////////////////////////////////////////////////////////////////////////
-function gameRenderPost()
-{
-}
 
-///////////////////////////////////////////////////////////////////////////////
-// load tiles image via url data
-const tilesImageData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAYklEQVR42u2TQQqAQAwDPfg6P5SX+b7VgkpDhNH7DuTSNGFZ6LJv66OTUWoz9M28sCXyw2xLpjc/CiQNQpIVFGaKZa+I538JZ4EDYSgAsCB+Pma5OwtgGWd2ZUCE4xr/6M4d3aFsj7DwoPQAAAAASUVORK5CYII=';
 
-///////////////////////////////////////////////////////////////////////////////
-// Startup LittleJS Engine
-engineInit(gameInit, gameUpdate, gameUpdatePost, gameRender, gameRenderPost, tilesImageData);
-
-///////////////////////////////////////////////////////////////////////////////
-// music - Depp Loop
-const music = new Music([[[,0,77,,,.7,2,.41,,,,,,,,.06],[,0,43,.01,,.3,2,,,,,,,,,.02,.01],[,0,170,.003,,.008,,.97,-35,53,,,,,,.1],[.8,0,270,,,.12,3,1.65,-2,,,,,4.5,,.02],[,0,86,,,.1,,.7,,,,.5,,6.7,1,.05],[,0,41,,.05,.4,2,0,,,9,.01,,,,.08,.02],[,0,2200,,,.04,3,2,,,800,.02,,4.8,,.01,.1],[.3,0,16,,,.3,3]],[[[1,-1,21,21,33,21,21,33,21,21,33,21,21,33,21,21,33,33,21,21,33,21,21,33,21,21,33,21,21,33,21,21,33,33,21,21,33,21,21,33,21,21,33,21,21,33,21,21,33,33,21,21,33,21,21,33,21,21,33,21,21,33,21,21,33,33],[3,1,22,,,,,,,,,,,,,,,,,,,,,,,,,,,,24,,,,24,,,,,,,,,,,,,,,,,,,,,,,,22,,22,,22,,,,],[5,-1,21,,,,,,,,,,,,,,,,,,,,,,,,,,,,24,,,,23,,,,,,,,,,,,,,,,,,,,,,,,24,,23,,21,,,,],[,1,21,,,,,,,,,,,,,,,,,,,,,,,,,,,,24,,,,23,,,,,,,,,,,,,,,,,,,,,,,,24,,23,,21,,,,]],[[1,-1,21,21,33,21,21,33,21,21,33,21,21,33,21,21,33,33,21,21,33,21,21,33,21,21,33,21,21,33,21,21,33,33,21,21,33,21,21,33,21,21,33,21,21,33,21,21,33,33,21,21,33,21,21,33,21,21,33,21,21,33,21,21,33,33],[3,1,24,,,,,,,,27,,,,,,,,,,,,,,,,27,,,,24,,,,24,,,,,,,,27,,,,,,,,,,,,,,,,24,,24,,24,,,,],[5,-1,21,,,,,,,,,,,,,,,,,,,,,,,,,,,,24,,,,23,,,,,,,,,,,,,,,,,,,,,,,,24,,23,,21,,,,],[,1,21,,,,,,,,,,,,,,,,,,,,,,,,,,,,24,,,,23,,,,,,,,,,,,,,,,,,,,,,,,24,,23,,21,,,,],[6,1,,,34,34,34,,,,,,34,34,,,,,34,,,,34,34,,,,,34,,,,34,,,,34,34,34,,,,,,34,,,,,,34,34,,,34,34,,,,,,,,,34,34],[4,1,,,,,,,24,,,,,,24,,24,,,,24,,,,24,,,,,,,,,,,,,,,,24,,,,,,24,,24,,,,24,,,,24,,,,,,,,,,]],[[1,-1,21,21,33,21,21,33,21,21,33,21,21,33,21,21,33,33,21,21,33,21,21,33,21,21,33,21,21,33,21,21,33,33,23,23,35,23,23,36,23,23,35,23,23,36,23,23,35,35,23,23,35,23,23,35,23,23,36,23,23,35,23,23,36,36],[5,-1,21,,,19,,,21,,,,,,,,,,21,,,19,,,17,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,],[3,1,24,,,24,,,24,,,,,,,,,,24,,,24,,,24,,,,24.75,24.5,24.26,24.01,24.01,24.01,,,,,25,,,,,,,,25,,,,,,,,25,,,,,,,,25,25,25,25],[4,-1,,,,,,,,,,,,,,,,,,,,,,,,,,,24.75,24.5,24.26,24.01,24.01,24.01,24.01,24,,24,24,,24,24,24,24,,24,24,,24,,24,24,,24,24,,24,24,24,24,,24,24,,24,24],[7,-1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,23,,21,23,,35,,23,,21,23,,35,,35,,23,,21,23,,35,,21,23,,35,,21,23,,,],[6,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,34,36,34,,33,34,34,36,31,36,34,,31,34,32,,33,36,34,,31,34,34,36,33,36,33,,31,,,]],[[1,-1,21,21,33,21,21,33,21,21,33,21,21,33,21,21,33,33,21,21,33,21,21,33,21,21,33,21,21,33,21,21,33,33,17,17,29,17,17,29,17,17,29,17,17,29,17,17,29,29,17,17,29,17,17,29,17,17,29,17,17,29,17,17,29,29],[4,1,24,24,,24,24,,24,24,24,24,,24,24,,24,,24,24,,24,24,,24,24,24,24,,24,24,,24,24,24,24,,24,24,,24,24,24,,,24,24,,24,,24,24,,24,24,,24,24,24,24,,24,24,,24,24],[7,-1,21,,19,21,,33,,21,,19,21,,33,,33,,21,,19,21,,33,,21,,19,21,,33,,33,,17,,17,17,29,17,17,29,17,,17,17,29,17,17,29,17,,17,17,29,17,17,29,17,,17,17,29,17,17,29],[2,1,,34,34,34,,34,34,34,,34,34,34,,34,34,34,,34,34,34,,34,34,34,,34,34,34,,34,,,,34,34,34,,34,34,34,,34,34,34,,34,34,34,,34,34,34,,34,34,34,,34,34,34,,34,,,],[6,1,,,36,,,,,,36,,36,,,,,,,,36,,,,,,36,,36,,,,,,,,36,,,,,,,,,,,,,,,,36,,,,,,36,,36,,,,,,],[3,1,,,,,25,,,,,,,,25,,,,,,,,25,,,,,,,,25,25,25,25,,,,,25,,,,,25,,,25,,,,,,,,25,,,,,,,,25,25,25,25]],[[1,-1,14,14,26,14,14,26,14,14,26,14,14,26,14,14,26,26,14,14,26,14,14,26,14,14,26,14,14,26,14,14,26,26,17,17,29,17,17,29,17,17,29,17,17,29,17,17,29,29,19,19,31,19,19,31,19,19,31,19,19,31,19,19,31,31],[4,1,24,24,,24,24,,24,24,24,24,,24,24,,24,,24,24,,24,24,,24,24,24,24,,24,24,,24,24,24,24,,24,24,,24,24,24,24,,24,24,,36,,24,24,,24,24,,24,24,24,24,,24,24,,24,24],[7,-1,14,,14,14,26,14,14,26,14,,14,14,26,14,14,26,14,,14,14,26,14,14,26,14,,14,14,26,14,14,26,17,,17,17,29,17,17,29,17,,17,17,29,17,17,29,19,,19,19,31,19,19,31,19,,19,19,31,19,19,31],[2,1,,36,36,36,,36,36,36,,36,36,36,,36,36,36,,36,36,36,,36,36,36,,36,36,36,,36,,,,36,36,36,,36,36,36,,36,36,36,,36,36,36,,36,36,36,,36,36,36,,36,36,36,,36,,,],[3,1,,,,,25,,,,,,,,25,,,,,,,,25,,,,,,,,25,25,25,25,,,,,25,,,,,,,,25,,,,,,,,25,,,,,,,,25,25,25,25],[6,1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,34,,,,,,34,,34,,,,,,,,34,,,,,,34,,34,,,,,,]]],[0,1,1,2,3,4,4]]);
