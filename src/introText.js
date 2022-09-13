@@ -1,7 +1,7 @@
 export const introText = [
     { dialog: [{ text: '5 October 1984', color: 'white' }], time: 0.1 },
 
-    { dialog: [{ text: '"Flight 815 requsting permission to land"', color: '#db6136' }], time: 3 },
+    { dialog: [{ text: 'Captian: \n"Flight 815 requsting permission to land"', color: '#db6136' }], time: 3 },
 
     {
         dialog: [{ text: '"Control tower here. Can you see the runway?"', color: '#4a8cbd' },
@@ -19,7 +19,7 @@ export const introText = [
     },
 
     {
-        dialog: [{ text: '"Captain! We need to pull up and abort the landing."', color: '#edc06d' },
+        dialog: [{ text: 'Co-pilot: "Captain! We need to pull up and abort the landing."', color: '#edc06d' },
         { text: '"Wait one moment."', color: '#db6136' },
         { text: `"Don't see, don't see, captian! Turn back!"`, color: '#edc06d' }], time: 15
     },
@@ -30,15 +30,25 @@ export const introText = [
 
     { dialog: [{ text: '*burning sound*', color: 'white' }], time: 23 },
 
-    { dialog: [{ text: '"Help! There is a boy here. HE IS ALIVE!"', color: '#aa4d8d' }], time: 25 },
+    { dialog: [{ text: 'Ly Yen: "Help! There is a boy here. HE IS ALIVE!"', color: '#aa4d8d' }], time: 25 },
 
     {
         dialog: [{ text: 'We need to get him to the hospital"', color: '#aa4d8d' },
-        { text: `Hold on! I'll get my bike"`, color: '#729d3f' },
-        { text: `HURRY!!!"`, color: '#aa4d8d' }], time: 29
+        { text: `Sim Viklay: "Hold on! I'll get my bike"`, color: '#729d3f' },
+        { text: `"HURRY!!!"`, color: '#aa4d8d' }], time: 29
     },
 
     { dialog: [{ text: `"Hold on to him. Let's go!"`, color: '#729d3f' }], time: 33 },
 
     { dialog: [{ text: ``, color: '#729d3f' }], time: 37 },
+];
+
+export const endTexts = [
+    { dialog: [{ text: `Kossamak Hospital`, color: 'white' }], time: 0.1 },
+
+    { dialog: [{ text: `Sim Viklay: "They will take care off you now my boy!""`, color: '#729d3f' }], time: 2 },
+
+    { dialog: [{ text: 'Ly Yen: "Lets go home..."', color: '#aa4d8d' }], time: 5 },
+
+    { dialog: [{ text: '', color: '#aa4d8d' }], time: 8 },
 ];

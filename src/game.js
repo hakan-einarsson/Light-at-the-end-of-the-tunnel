@@ -16,7 +16,7 @@ import { pickupSound, newLevelSound } from './Sounds.js';
 import { playMusic } from './Music.js';
 import { SpriteFactory } from './SpriteFactory.js';
 import { Button } from './Button.js';
-import { introText } from './introText.js';
+import { introText, endTexts } from './introText.js';
 import { Level } from './Level.js';
 import { Text } from './Text.js';
 let { canvas, context } = init(document.getElementById('kontra'));
@@ -73,11 +73,12 @@ preloadResources().then(images => {
             if (gameState == 0) {
                 if (fireStart) {
                     fireStart = checkStartGame()
-                    console.log(firestart)
                 } else {
                     fireStart = checkStartGame()
                     if (checkStartGame()) {
                         gameState = 1;
+                        introTextTimer.reset();
+                        activeTexts.splice(0, activeTexts.length);
                     }
                 }
             }
@@ -200,8 +201,13 @@ preloadResources().then(images => {
             if (gameState == 5) {
                 backgroundCanvas.clear();
                 textLayerCanvas.clear();
-                textLayerCanvas.drawYouWinText();
                 stopMusic();
+                textLayerCanvas.clear();
+                if (!introTextTimer.isRunning) {
+                    introTextTimer.start();
+                }
+                showEnd();
+
             }
         }
     });
@@ -215,7 +221,6 @@ preloadResources().then(images => {
         introTextTimer.tick()
         let introTextIndex = Math.round(introTextTimer.timeElapsed * 10) / 10;
         if (introText[0].time == introTextIndex) {
-
             activeTexts.splice(0, activeTexts.length);
             introText[0].dialog.forEach((text) => {
                 activeTexts.push(new Text(text.text, 256, 256 - fontSize + (fontSize + 10) * (activeTexts.length), fontSize, text.color));
@@ -225,8 +230,28 @@ preloadResources().then(images => {
         drawTexts();
         if (introText.length == 0) {
             gameState = 1;
+            introTextIndex.reset();
+            activeTexts.splice(0, activeTexts.length);
         }
 
+    }
+
+    function showEnd() {
+        let fontSize = 16;
+        introTextTimer.tick()
+        let endTextIndex = Math.round(introTextTimer.timeElapsed * 10) / 10;
+        if (endTexts.length > 0 && endTexts[0].time == endTextIndex) {
+            activeTexts.splice(0, activeTexts.length);
+            endTexts[0].dialog.forEach((text) => {
+                activeTexts.push(new Text(text.text, 256, 256 - fontSize + (fontSize + 10) * (activeTexts.length), fontSize, text.color));
+            });
+            endTexts.splice(0, 1);
+        }
+        endTexts.length > 0 && drawTexts();
+        if (endTexts.length == 0) {
+            activeTexts.splice(0, activeTexts.length);
+            textLayerCanvas.drawText({ text: 'Thank you for playing our game!', x: 256, y: 256 - 20, font: `20px Arial`, color: 'white' });
+        }
     }
 
     function showStartScreen() {
