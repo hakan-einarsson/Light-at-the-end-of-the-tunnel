@@ -120,11 +120,11 @@ preloadResources().then(images => {
             if (gameState == 2) {
                 if (timer.tick()) {
                     let timeRounded = Math.round(timer.timeElapsed * 10) / 10;
-                    if (timeRounded == levelTime - 5) {
+                    if (timeRounded >= levelTime - 5 && timeRounded < levelTime) {
                         darkMode = true;
                         textTimer.start();
                     }
-                    if (timeRounded == levelTime) {
+                    if (timeRounded >= levelTime) {
                         gameState = 3;
                         player.playAnimation('death');
                     }
