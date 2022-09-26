@@ -7,8 +7,6 @@ export class Timer {
 
     tick() {
         if (this.isRunning) {
-            // let currentTime = new Date().getTime() / 1000;
-            // let currentTime = new Date().getTime() / 100
             this.frames++
             if (this.frames == 6) {
                 this.timeElapsed += 0.1;

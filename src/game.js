@@ -7,7 +7,7 @@ import {
 } from 'kontra';
 import { levels } from './levels.js';
 import { Canvas } from './Canvas.js';
-import { inputHandler, checkIfPlayerIsOnEndPoint, checkIfPlayerIsOnSwitch, checkIfPlayerIsOnGem, checkStartGame } from './inputHandler.js';
+import { inputHandler, checkIfPlayerIsOnEndPoint, checkIfPlayerIsOnSwitch, checkIfPlayerIsOnGem, checkStartGame, toggleButtons } from './inputHandler.js';
 import { Timer } from './Timer.js';
 import { preloadResources, drawEndPoint } from './GameUtilies.js';
 import { FadingText } from './FadingText.js';
@@ -43,6 +43,13 @@ preloadResources().then(images => {
      * 5 - game complete
      */
     let gameState = 0;
+    /**
+     * Game mode
+     * 0 - easy
+     * 1 - normal
+     * 2 - cruel
+     */
+    let gameMode = 0;
     let currentLevel = 1;
     let currentLevelVersion = 0;
     let currentLevelMap;
@@ -55,10 +62,13 @@ preloadResources().then(images => {
     const player = spriteFactory.getPlayer();
     const floorTile = images[1];
     const splash = images[2];
+    const buttons = [];
+    let activeButton = 0;
     let levelText;
     const timer = new Timer();
     const textTimer = new Timer();
     const introTextTimer = new Timer();
+    let activeIntroText = [...introText];
     const activeTexts = [];
     const activeFadingTexts = [];
     let deathAnimationTicker = 0;
@@ -67,10 +77,12 @@ preloadResources().then(images => {
     let opacityChange = 0;
     let gameCleared = false;
     let fireStart = false;
+    let isToggelingButtons = false;
 
     let loop = GameLoop({
         update: function () {
             if (gameState == 0) {
+                currentLevel = 1;
                 if (fireStart) {
                     fireStart = checkStartGame()
                 } else {
@@ -83,6 +95,14 @@ preloadResources().then(images => {
                 }
             }
             if (gameState == 1) {
+                if (isToggelingButtons) {
+                    const [nextActiveButton, isPressed] = toggleButtons(activeButton, buttons);
+                    isToggelingButtons = isPressed;
+                } else {
+                    const [nextActiveButton, isPressed] = toggleButtons(activeButton, buttons);
+                    activeButton = nextActiveButton;
+                    isToggelingButtons = isPressed;
+                }
                 if (fireStart) {
                     fireStart = checkStartGame()
                 } else {
@@ -90,8 +110,10 @@ preloadResources().then(images => {
                     if (checkStartGame()) {
                         startMusic();
                         gameState = 2;
+                        setGameMode();
                         setLevelProperties(player);
                         drawLevelMap(floorTile);
+                        activeButton = 0;
                     }
                 }
             }
@@ -134,13 +156,30 @@ preloadResources().then(images => {
             }
             if (gameState == 4) {
                 stopMusic();
+                if (isToggelingButtons) {
+                    const [nextActiveButton, isPressed] = toggleButtons(activeButton, buttons);
+                    isToggelingButtons = isPressed;
+                } else {
+                    const [nextActiveButton, isPressed] = toggleButtons(activeButton, buttons);
+                    activeButton = nextActiveButton;
+                    isToggelingButtons = isPressed;
+                }
                 if (checkStartGame()) {
-                    currentLevel = 1;
-                    startMusic();
-                    gameState = 2;
-                    setLevelProperties(player);
-                    player.playAnimation('idle');
-                    drawLevelMap(floorTile);
+                    if (activeButton == 0) {
+                        if (gameMode == 2) currentLevel = 1;
+                        startMusic();
+                        gameState = 2;
+                        setLevelProperties(player);
+                        player.playAnimation('idle');
+                        drawLevelMap(floorTile);
+                    } else {
+                        gameState = 0;
+                        activeButton = 0;
+                        player.playAnimation('idle');
+                        activeIntroText = [...introText];
+                        introTextTimer.reset();
+                    }
+
                 }
             }
         },
@@ -193,10 +232,8 @@ preloadResources().then(images => {
                 backgroundCanvas.clear();
             }
             if (gameState == 4) {
-                backgroundCanvas.clear();
-                textLayerCanvas.clear();
-                textLayerCanvas.drawYouLooseText();
-                textLayerCanvas.drawButton(new Button(256, 350, 'Retry'))
+                showGameOver();
+
             }
             if (gameState == 5) {
                 backgroundCanvas.clear();
@@ -220,15 +257,15 @@ preloadResources().then(images => {
         let fontSize = 16;
         introTextTimer.tick()
         let introTextIndex = Math.round(introTextTimer.timeElapsed * 10) / 10;
-        if (introText[0].time == introTextIndex) {
+        if (activeIntroText[0].time == introTextIndex) {
             activeTexts.splice(0, activeTexts.length);
-            introText[0].dialog.forEach((text) => {
+            activeIntroText[0].dialog.forEach((text) => {
                 activeTexts.push(new Text(text.text, 256, 256 - fontSize + (fontSize + 10) * (activeTexts.length), fontSize, text.color));
             });
-            introText.splice(0, 1);
+            activeIntroText.splice(0, 1);
         }
         drawTexts();
-        if (introText.length == 0) {
+        if (activeIntroText.length == 0) {
             gameState = 1;
             introTextIndex.reset();
             activeTexts.splice(0, activeTexts.length);
@@ -262,8 +299,21 @@ preloadResources().then(images => {
         backgroundCanvas.context.fillStyle = '#000';
         backgroundCanvas.context.fill();
         backgroundCanvas.context.drawImage(splash, 14, 16);
-        textLayerCanvas.drawButton(new Button(256, 350, 'Start'))
+        buttons.splice(0, buttons.length);
+        buttons.push(new Button(156, 350, 'Easy'));
+        buttons.push(new Button(256, 350, 'Normal'));
+        buttons.push(new Button(356, 350, 'Cruel '));
+        renderButtons();
+    }
 
+    function showGameOver() {
+        backgroundCanvas.clear();
+        textLayerCanvas.clear();
+        textLayerCanvas.drawYouLooseText();
+        buttons.splice(0, buttons.length);
+        buttons.push(new Button(206, 350, 'Retry'));
+        buttons.push(new Button(306, 350, 'Exit'));
+        renderButtons();
     }
     function startMusic() {
         if (!music) {
@@ -353,16 +403,33 @@ preloadResources().then(images => {
         }
     }
 
+    function renderButtons() {
+        if (buttons.length > 0) {
+            buttons.forEach((button, index) => {
+                if (index == activeButton) button.active = true;
+                textLayerCanvas.drawButton(button);
+            })
+        }
+    }
+
     function resetFadingTexts() {
         fadingTexts.forEach(text => {
             text.reset();
         });
     }
 
+    function setGameMode() {
+        buttons.forEach((button, index) => {
+            if (button.active) {
+                gameMode = index;
+            }
+        });
+    }
+
     function setLevelProperties(player) {
         currentLevelMap = new Level(...levels[currentLevel]);
         currentLevelMap.timer > 0 && currentLevelMap.startTimer();
-        levelTime = currentLevelMap.time;
+        levelTime = setLevelTime(currentLevelMap.time);
         opacityChange = 1 / (levelTime - 3);
         player.setPosition(currentLevelMap.startPoint[0], currentLevelMap.startPoint[1]);
         backgroundCanvas.setSize(currentLevelMap.size);
@@ -384,6 +451,18 @@ preloadResources().then(images => {
         darkMode = false;
         resetFadingTexts();
         levelText = new FadingText([512 / 2, 512 / 2], 'Level ' + (currentLevelMap.name), 50);
+    }
+
+    function setLevelTime(levelTime) {
+        if (gameMode == 0) {
+            return levelTime * 1.5;
+        }
+        if (gameMode == 1) {
+            return levelTime * 1.25;
+        }
+        if (gameMode == 2) {
+            return levelTime;
+        }
     }
 
     function drawLevelMap(floorTile) {
