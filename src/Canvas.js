@@ -91,7 +91,7 @@ export class Canvas {
         let x = button.x;
         let y = button.y;
         let text = button.text;
-        this.context.fillStyle = "#000";
+        // this.context.fillStyle = "#000";
         this.context.strokeStyle = "#c8cdcc";
         this.context.font = `24px Arial`;
         let textWidth = this.context.measureText(text).width;
@@ -99,8 +99,10 @@ export class Canvas {
         let height = 24 + 5 * 2;
         let x1 = Math.floor(x - width / 2) - 10;
         let y1 = Math.floor(y - height / 2) - 2;
-        this.context.fillRect(x1, y1, width, height);
-        this.context.strokeRect(Math.floor(x - width / 2) - 10, Math.floor(y - height / 2) - 2, width, height);
+        if (button.active) {
+            // this.context.fillRect(x1, y1, width, height);
+            this.context.strokeRect(Math.floor(x - width / 2) - 10, Math.floor(y - height / 2) - 2, width, height);
+        }
         this.context.fillStyle = "#c8cdcc";
         this.context.fillText(text, Math.floor(x - width / 2), Math.floor(y + 12 / 2));
         return { x: x1, y: y1, width: width, height: height };

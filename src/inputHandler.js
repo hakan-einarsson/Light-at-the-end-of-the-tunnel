@@ -21,15 +21,19 @@ export function inputHandler(player, corridors) {
 
 export function checkStartGame() {
 
-    return keyPressed(keyMap.Space) || gamepadPressed('south') || gamepadPressed('start')
-    // if(fireSpace === true) {
-    //     return false;
-    // }
+    return keyPressed(keyMap.Space) || gamepadPressed('start')
+}
 
-    // if (keyPressed(keyMap.Space) || gamepadPressed('south') || gamepadPressed('start')) {
-    //     return true;
-    // }
-    // return false;
+export function toggleButtons(activeButton, buttons) {
+    if (keyPressed(keyMap.ArrowLeft) || keyPressed('a') || gamepadPressed('dpadleft')) {
+        let nextActiveButton = activeButton - 1 < 0 ? buttons.length - 1 : activeButton - 1;
+        return [nextActiveButton, true];
+    }
+    if (keyPressed(keyMap.ArrowRight) || keyPressed('d') || gamepadPressed('dpadright')) {
+        let nextActiveButton = activeButton + 1 > buttons.length - 1 ? 0 : activeButton + 1;
+        return [nextActiveButton, true];
+    }
+    return [activeButton, false];
 }
 
 function checkIfNextMoveIsInCorridor(player, direction, corridors) {
