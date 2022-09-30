@@ -4,6 +4,7 @@ This was originally a game for the [js13kGames](https://js13kgames.com/), but th
 but I kinda liked it and felt it had more potential so I'm gonna finnish it. 
 
 The game plot:
+
 Help guide the spirit of a dying young boy through deaths labyrinth back to life before the light goes out. 
 Gems will renew the strength of the light. There are hidden switches that alters the maze and sometimes the maze changes by itself.
 
