@@ -2,16 +2,17 @@ const canvas = document.getElementById('canvas');
 const context = canvas.getContext('2d');
 
 let size = 128;
+let offset = { x: 0, y: 0 };
 
 let drawing = false;
 let editing = false;
 let version = 0;
 const corridors = [[]];
-let startPoint = { x: 0, y: 0 };
-let endPoint = { x: 0, y: 0 };
+let startPoint = null;
+let endPoint = null;
 let gems = [];
 let switches = [];
-let levelNumber = 1;
+let levelNumber = '';
 let currentCorridor = null;
 let time = 0;
 let editCorridor = -1;
@@ -57,6 +58,8 @@ const deleteButton = document.getElementById('delete');
 const printButton = document.getElementById('print');
 const loadButton = document.getElementById('load');
 const sizeInput = document.getElementById('size');
+const offsetXInput = document.getElementById('offset-x');
+const offsetYInput = document.getElementById('offset-y');
 const drawObjectButtons = document.getElementsByClassName('draw-object');
 const versionButton = document.getElementById('version-handler');
 const addVersionButton = document.getElementById('add-version');
@@ -79,7 +82,7 @@ levelTimeInput.onchange = function () {
 };
 
 levelNumberInput.onchange = function () {
-    levelNumber = parseInt(levelNumberInput.value);
+    levelNumber = this.value;
 };
 
 showOnlyCorridorsCheckbox.onchange = function () {
@@ -144,6 +147,16 @@ sizeInput.onchange = function () {
     size = this.value;
     setCanvasSize();
 }
+
+//offsetInput on change event
+offsetXInput.onchange = function () {
+    //convert to number
+    offset.x = parseInt(this.value);
+}
+offsetYInput.onchange = function () {
+    offset.y = parseInt(this.value);
+}
+
 
 loadButton.onclick = function () {
     //load from textarea
@@ -327,7 +340,7 @@ function hideEditPanel() {
 function setCanvasSize() {
     canvas.width = size;
     canvas.height = size;
-    canvas.style.maxWidth = size + 'px';
+    // canvas.style.maxWidth = size + 'px';
     sizeInput.value = size;
 }
 
@@ -335,40 +348,41 @@ function setCanvasSize() {
 
 
 canvas.onclick = function (e) {
-
+    let x = Math.floor(e.offsetX * (size / 512) + offset.x);
+    let y = Math.floor(e.offsetY * (size / 512) + offset.y);
     if (drawing) {
         if (drawObject == 0) {
             editCorridor = -1;
             if (startDrawing) {
-                mouseEndPosition = { x: e.offsetX - 5, y: e.offsetY - 5 };
-                currentCorridor = new Corridor(e.offsetX, e.offsetY, 0, 0);
+                mouseEndPosition = { x: x - 5, y: y - 5 };
+                currentCorridor = new Corridor(x, y, 0, 0);
                 startDrawing = false;
                 endDrawing = true;
             } else {
                 startDrawing = true;
                 endDrawing = false;
-                mouseStartPosition = { x: e.offsetX - 5, y: e.offsetY - 5 };
-                mouseDragPosition = { x: e.offsetX - 5, y: e.offsetY - 5 };
+                mouseStartPosition = { x: x - 5, y: y - 5 };
+                mouseDragPosition = { x: x - 5, y: y - 5 };
 
             }
         }
         if (drawObject == 1) {
-            startPoint = { x: e.offsetX, y: e.offsetY };
+            startPoint = { x: x, y: y };
         }
         if (drawObject == 2) {
-            endPoint = { x: e.offsetX, y: e.offsetY };
+            endPoint = { x: x, y: y };
         }
         if (drawObject == 3) {
-            switches.push([e.offsetX - 5, e.offsetY - 5]);
+            switches.push([x - 5, y - 5]);
         }
         if (drawObject == 4) {
-            gems.push([e.offsetX, e.offsetY]);
+            gems.push([x, y]);
         }
     } else if (editing) {
         startDrawing = false;
         endDrawing = false;
         for (let i = 0; i < corridors[version].length; i++) {
-            if (corridors[version][i].x1 <= e.offsetX && corridors[version][i].x2 >= e.offsetX && corridors[version][i].y1 <= e.offsetY && corridors[version][i].y2 >= e.offsetY) {
+            if (corridors[version][i].x1 <= x && corridors[version][i].x2 >= x && corridors[version][i].y1 <= y && corridors[version][i].y2 >= y) {
                 editCorridor = i;
                 editGem = -1;
                 editSwitch = -1;
@@ -381,7 +395,7 @@ canvas.onclick = function (e) {
         if (!showOnlyCorridors) {
             for (let i = 0; i < switches.length; i++) {
                 let size = 10;
-                if (switches[i][0] <= e.offsetX && switches[i][0] + size >= e.offsetX && switches[i][1] <= e.offsetY && switches[i][1] + size >= e.offsetY) {
+                if (switches[i][0] <= x && switches[i][0] + size >= x && switches[i][1] <= y && switches[i][1] + size >= y) {
                     editSwitch = i;
                     editGem = -1;
                     editCorridor = -1;
@@ -391,7 +405,7 @@ canvas.onclick = function (e) {
             }
             for (let i = 0; i < gems.length; i++) {
                 let size = 10;
-                if (gems[i][0] <= e.offsetX && gems[i][0] + size >= e.offsetX && gems[i][1] <= e.offsetY && gems[i][1] + size >= e.offsetY) {
+                if (gems[i][0] <= x && gems[i][0] + size >= x && gems[i][1] <= y && gems[i][1] + size >= y) {
                     editGem = i;
                     editSwitch = -1;
                     editCorridor = -1;
@@ -409,19 +423,20 @@ canvas.onclick = function (e) {
 
 //
 canvas.onmousemove = function (e) {
+    let x = Math.floor(e.offsetX * (size / 512) + offset.x);
+    let y = Math.floor(e.offsetY * (size / 512) + offset.y);
     if (drawing) {
         if (startDrawing && drawObject == 0) {
-            if (Math.abs(e.offsetX - mouseStartPosition.x) > Math.abs(e.offsetY - mouseStartPosition.y)) {
+            if (Math.abs(x - mouseStartPosition.x) > Math.abs(y - mouseStartPosition.y)) {
                 mouseDragPosition.y = mouseStartPosition.y;
-                mouseDragPosition.x = e.offsetX;
+                mouseDragPosition.x = x;
             } else {
                 mouseDragPosition.x = mouseStartPosition.x;
-                mouseDragPosition.y = e.offsetY;
+                mouseDragPosition.y = y;
             }
-            // mouseDragPosition = { x: e.offsetX, y: e.offsetY };
         }
-        box.x = e.offsetX - 5;
-        box.y = e.offsetY - 5;
+        box.x = x - 5 - offset.x;
+        box.y = y - 5 - offset.y;
 
 
     }
@@ -462,10 +477,10 @@ function gameLoop() {
             let goingVertical = height > width;
             if (goingVertical) {
                 width = 10;
-                goingUp ? height += 10 : height += 0;
+                goingUp ? height += 10 : height += 5;
                 startPosX = mouseStartPosition.x;
             } else {
-                goingLeft ? width += 10 : width += 0;
+                goingLeft ? width += 10 : width += 5;
                 height = 10;
                 startPosY = mouseStartPosition.y;
             }
@@ -493,11 +508,11 @@ function gameLoop() {
     }
     context.beginPath();
     corridors[version].forEach(corridor => {
-        context.rect(corridor.x1, corridor.y1, corridor.width, corridor.height);
+        context.rect(corridor.x1 - offset.x, corridor.y1 - offset.y, corridor.width, corridor.height);
     });
 
     if (currentCorridor != null) {
-        context.rect(currentCorridor.x1, currentCorridor.y1, currentCorridor.width, currentCorridor.height);
+        context.rect(currentCorridor.x1 - offset.x, currentCorridor.y1 - offset.y, currentCorridor.width, currentCorridor.height);
     }
     context.closePath();
     context.fillStyle = 'white';
@@ -505,14 +520,14 @@ function gameLoop() {
     if (!showOnlyCorridors) {
         if (startPoint != null) {
             context.beginPath();
-            context.rect(startPoint.x - 5, startPoint.y - 5, 10, 10);
+            context.rect(startPoint.x - 5 - offset.x, startPoint.y - 5 - offset.y, 10, 10);
             context.closePath();
             context.fillStyle = 'red';
             context.fill();
         }
         if (endPoint != null) {
             context.beginPath();
-            context.rect(endPoint.x - 5, endPoint.y - 5, 10, 10);
+            context.rect(endPoint.x - 5 - offset.x, endPoint.y - 5 - offset.y, 10, 10);
             context.closePath();
             context.fillStyle = 'blue';
             context.fill();
@@ -520,7 +535,7 @@ function gameLoop() {
         if (switches.length > 0) {
             context.beginPath();
             switches.forEach(switchPos => {
-                context.rect(switchPos[0], switchPos[1], 10, 10);
+                context.rect(switchPos[0] - offset.x, switchPos[1] - offset.y, 10, 10);
             });
             context.closePath();
             context.fillStyle = 'green';
@@ -529,7 +544,7 @@ function gameLoop() {
         if (gems.length > 0) {
             context.beginPath();
             gems.forEach(gemPos => {
-                context.rect(gemPos[0] - 5, gemPos[1] - 5, 10, 10);
+                context.rect(gemPos[0] - 5 - offset.x, gemPos[1] - 5 - offset.y, 10, 10);
             });
             context.closePath();
             context.fillStyle = 'orange';
@@ -541,6 +556,9 @@ function gameLoop() {
     if (drawing) {
         context.beginPath();
         context.rect(box.x, box.y, box.width, box.height);
+        if (drawObject == 0) {
+            context.fillStyle = 'white';
+        }
         if (drawObject == 1) {
             context.fillStyle = 'red';
         }
