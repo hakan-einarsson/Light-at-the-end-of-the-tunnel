@@ -14,8 +14,10 @@ export function inputHandler(player, corridors) {
     if (keyPressed(keyMap.ArrowRight) || keyPressed('d') || gamepadPressed('dpadright')) {
         direction[0] += 1;
     }
-    const checkNextMove = checkIfNextMoveIsInCorridor(player, direction, corridors)
-    checkNextMove[0] && move(player, direction);
+    const checkNextMove = checkIfNextMoveIsInCorridor(player, direction, corridors);
+    console.log(checkNextMove[0])
+    const directionAdjusted = [direction[0] * checkNextMove[0][0], direction[1] * checkNextMove[0][1]];
+    move(player, directionAdjusted);
     return checkNextMove[1];
 }
 
@@ -38,25 +40,69 @@ export function toggleButtons(activeButton, buttons) {
 
 function checkIfNextMoveIsInCorridor(player, direction, corridors) {
     const position = player.getPosition();
-    let inCorridor = false;
+    let onCorridorX = [false, false];
+    let onCorridorY = [false, false];
+    let inCorridor = [0, 0];
     let isOnPlatform = false;
     const nextPosition = { x: position.x + direction[0], y: position.y + direction[1] };
+    // const bounds = [
+    //     [nextPosition.x - player.rad, nextPosition.y - player.rad],
+    //     [nextPosition.x - player.rad, nextPosition.y + player.rad],
+    //     [nextPosition.x + player.rad, nextPosition.y - player.rad],
+    //     [nextPosition.x + player.rad, nextPosition.y + player.rad]
+    // ];
     for (let i = 0; i < corridors.length; i++) {
-        if (!inCorridor) {
-            if (nextPosition.x > corridors[i].x1 && nextPosition.x <= corridors[i].x1 + corridors[i].width
-                && nextPosition.y > corridors[i].y1 && nextPosition.y <= corridors[i].y1 + corridors[i].height) {
-                inCorridor = true;
+        if (direction[0] !== 0 && inCorridor[0] === 0) {
+            if (direction[0] > 0) {
+                let bounds = [
+                    [nextPosition.x + player.rad, position.y - player.rad],
+                    [nextPosition.x + player.rad, position.y + player.rad]
+                ];
+                checkCollision(bounds[0], corridors[i]) && (onCorridorX[0] = true);
+                checkCollision(bounds[1], corridors[i]) && (onCorridorX[1] = true);
+            } else {
+                let bounds = [
+                    [nextPosition.x - player.rad, position.y - player.rad],
+                    [nextPosition.x - player.rad, position.y + player.rad]
+                ];
+                checkCollision(bounds[0], corridors[i]) && (onCorridorX[0] = true);
+                checkCollision(bounds[1], corridors[i]) && (onCorridorX[1] = true);
             }
         }
+        if (direction[1] !== 0 && inCorridor[1] === 0) {
+            if (direction[1] > 0) {
+                let bounds = [
+                    [position.x - player.rad, nextPosition.y + player.rad],
+                    [position.x + player.rad, nextPosition.y + player.rad]
+                ];
+                checkCollision(bounds[0], corridors[i]) && (onCorridorY[0] = true);
+                checkCollision(bounds[1], corridors[i]) && (onCorridorY[1] = true);
+            } else {
+                let bounds = [
+                    [position.x - player.rad, nextPosition.y - player.rad],
+                    [position.x + player.rad, nextPosition.y - player.rad]
+                ];
+                checkCollision(bounds[0], corridors[i]) && (onCorridorY[0] = true);
+                checkCollision(bounds[1], corridors[i]) && (onCorridorY[1] = true);
+            }
+        }
+
+        if (onCorridorX[0] && onCorridorX[1]) inCorridor[0] = 1;
+        if (onCorridorY[0] && onCorridorY[1]) inCorridor[1] = 1;
+
         if (!isOnPlatform) {
-            if (position.x > corridors[i].x1 - 1 && position.x < corridors[i].x1 + corridors[i].width + 1
-                && position.y > corridors[i].y1 - 1 && position.y < corridors[i].y1 + corridors[i].height + 1) {
+            if (position.x >= corridors[i].x1 - 1 && position.x <= corridors[i].x1 + corridors[i].width + 1
+                && position.y >= corridors[i].y1 - 1 && position.y <= corridors[i].y1 + corridors[i].height + 1) {
                 isOnPlatform = true;
             }
         }
 
     }
     return [inCorridor, isOnPlatform];
+}
+
+function checkCollision(pos, corridor) {
+    return pos[0] >= corridor.x1 && pos[0] <= corridor.x2 && pos[1] >= corridor.y1 && pos[1] <= corridor.y2;
 }
 
 export function checkIfPlayerIsOnEndPoint(player, endPoint) {
@@ -100,6 +146,13 @@ export function checkIfPlayerIsOnGem(player, gem) {
 
 
 function move(player, direction) {
-    player.x += direction[0];
-    player.y += direction[1];
+    if (direction[0] !== 0 && direction[1] !== 0) {
+        player.x += direction[0] * player.speed / Math.sqrt(2);
+        player.y += direction[1] * player.speed / Math.sqrt(2);
+        player.x = Math.round(player.x);
+        player.y = Math.round(player.y);
+    } else {
+        player.x += direction[0];
+        player.y += direction[1];
+    }
 }
