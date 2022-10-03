@@ -70,6 +70,7 @@ preloadResources().then(images => {
     const introTextTimer = new Timer();
     let activeIntroText = [...introText];
     const activeTexts = [];
+    const infoTexts = [];
     const activeFadingTexts = [];
     let deathAnimationTicker = 0;
     let deathAnimationTickerMax = 60;
@@ -254,8 +255,10 @@ preloadResources().then(images => {
 
     //game loop functions
     function showIntro() {
+        infoTexts.splice(0, infoTexts.length);
         let fontSize = 16;
         introTextTimer.tick()
+        infoTexts.push(new Text('Press Space/Start to skip inro', 256, 500 - 12, 12, "#c8cdcc"));
         let introTextIndex = Math.round(introTextTimer.timeElapsed * 10) / 10;
         if (activeIntroText[0].time == introTextIndex) {
             activeTexts.splice(0, activeTexts.length);
@@ -269,6 +272,7 @@ preloadResources().then(images => {
             gameState = 1;
             introTextIndex.reset();
             activeTexts.splice(0, activeTexts.length);
+            infoTexts.splice(0, infoTexts.length);
         }
 
     }
@@ -379,9 +383,16 @@ preloadResources().then(images => {
     }
 
     function drawTexts() {
-        activeTexts.forEach((text, index) => {
-            textLayerCanvas.drawText(text);
-        });
+        if (activeTexts.length > 0) {
+            activeTexts.forEach((text) => {
+                textLayerCanvas.drawText(text);
+            });
+        }
+        if (infoTexts.length > 0) {
+            infoTexts.forEach((text) => {
+                textLayerCanvas.drawText(text);
+            });
+        }
     }
 
     function drawPlayerLight() {
