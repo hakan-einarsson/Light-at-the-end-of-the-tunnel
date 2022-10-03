@@ -33,7 +33,7 @@ export class SpriteFactory {
         const player = Sprite({
             x: 0,
             y: 0,
-            rad: 4,
+            rad: 2,
             animations: this.spriteSheet.animations,
             speed: 1,
             getPosition: function () {
